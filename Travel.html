@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Мои путешествия ✈️</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+        .priority-high {
+            border-left: 5px solid #dc3545;
+        }
+        .priority-medium {
+            border-left: 5px solid #ffc107;
+        }
+        .priority-low {
+            border-left: 5px solid #0d6efd;
+        }
+        .photo-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .photo-thumb:hover,
+        .photo-thumb.active-thumb {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
+        }
+        #modalMainPhoto {
+            max-height: 70vh;
+            width: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        .star-rating .bi {
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #ccc;
+            transition: color 0.15s;
+        }
+        .star-rating .bi.active,
+        .star-rating .bi:hover {
+            color: gold;
+        }
+        .tab-content>.tab-pane {
+            display: none;
+        }
+        .tab-content>.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar bg-primary sticky-top" data-bs-theme="dark">
+        <div class="container">
+            <span class="navbar-brand">✈️ Мои путешествия</span>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <ul class="nav nav-tabs mb-4" id="travelTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#wishlist">🌍 Хочу посетить</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#visited">✅ Посетил</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#addForm">➕ Добавить</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="wishlist">
+                <div class="row" id="wishlistContainer"></div>
+                <div id="wishlistEmpty" class="text-center py-5 text-muted">
+                    <i class="bi bi-map" style="font-size: 3rem;"></i>
+                    <p>Пока нет мест. Добавьте первое!</p>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="visited">
+                <div class="row" id="visitedContainer"></div>
+                <div id="visitedEmpty" class="text-center py-5 text-muted">
+                    <i class="bi bi-geo-alt" style="font-size: 3rem;"></i>
+                    <p>Вы пока нигде не были.</p>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="addForm">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                <h4 class="mb-3" id="formTitle">Новое место</h4>
+
+                                <div class="alert alert-info small mb-3">
+                                    <strong>📸 Как добавить фото через Flickr:</strong><br>
+                                    <strong>Для галереи на сайте:</strong>
+                                    <ol class="mb-1 ps-3">
+                                        <li>Откройте фото на <a href="https://flickr.com" target="_blank">Flickr</a></li>
+                                        <li>Нажмите <strong>Правой кнопкой</strong> → "Копировать адрес изображения"</li>
+                                        <li>Вставьте ссылки ниже через запятую (3-5 лучших фото)</li>
+                                    </ol>
+                                    <strong>Для полного альбома:</strong>
+                                    <ol class="mb-0 ps-3">
+                                        <li>Откройте альбом на Flickr</li>
+                                        <li>Скопируйте ссылку из адресной строки</li>
+                                        <li>Вставьте в поле "Ссылка на альбом"</li>
+                                    </ol>
+                                </div>
+
+                                <form id="placeForm">
+                                    <input type="hidden" id="editId" value="">
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Название места *</label>
+                                        <input type="text" class="form-control" id="nameInput" required
+                                        placeholder="Например: Мурманск, Териберка">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Фото для галереи (через запятую)</label>
+                                        <textarea class="form-control" id="photosInput" rows="2"
+                                        placeholder="https://live.staticflickr.com/.../photo1.jpg, https://live.staticflickr.com/.../photo2.jpg"></textarea>
+                                        <div class="form-text">3-5 лучших фото для отображения на сайте. Ссылки должны заканчиваться на .jpg</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">🔗 Ссылка на альбом Flickr</label>
+                                        <input type="url" class="form-control" id="albumInput"
+                                        placeholder="https://www.flickr.com/photos/ваш-id/albums/123456/">
+                                        <div class="form-text">Все фото из поездки. На сайте появится кнопка "Смотреть все фото".</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Краткое описание</label>
+                                        <textarea class="form-control" id="descInput" rows="2"
+                                        placeholder="Северное сияние, олени, Баренцево море..."></textarea>
+                                    </div>
+
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Приоритет</label>
+                                            <select class="form-select" id="priorityInput">
+                                                <option value="high">🔥 Очень хочу</option>
+                                                <option value="medium" selected>🙂 Было бы круто</option>
+                                                <option value="low">💭 Когда-нибудь</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Статус</label>
+                                            <select class="form-select" id="statusInput">
+                                                <option value="want" selected>Хочу посетить</option>
+                                                <option value="visited">Уже посетил</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="visitedFields" class="d-none">
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Дата поездки</label>
+                                                <input type="date" class="form-control" id="dateInput">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Оценка</label>
+                                                <div class="star-rating d-flex gap-1 mt-1" id="starRating"></div>
+                                                <input type="hidden" id="ratingInput" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-success flex-grow-1" id="submitBtn">
+                                            <i class="bi bi-plus-circle"></i> Добавить место
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary d-none" id="cancelEditBtn">
+                                            Отмена
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="photoModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalMainPhoto" src="" alt="Фото" class="rounded mb-3">
+                    <div id="modalThumbnails" class="d-flex justify-content-center gap-2 flex-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const STORAGE_KEY = 'myTravelPlaces_flickr';
+
+        function getPlaces() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) { return []; }
+        }
+
+        function savePlaces(places) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+                return true;
+            } catch (e) {
+                alert('❌ Память переполнена! Удалите старые места.');
+                return false;
+            }
+        }
+
+        function setupStarRating(initialRating) {
+            initialRating = initialRating || 0;
+            const container = document.getElementById('starRating');
+            container.innerHTML = '';
+            const ratingInput = document.getElementById('ratingInput');
+            ratingInput.value = initialRating;
+
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('i');
+                star.className = i <= initialRating ? 'bi bi-star-fill active' : 'bi bi-star';
+                star.dataset.value = i;
+                star.style.cursor = 'pointer';
+
+                star.addEventListener('mouseenter', function() {
+                    container.querySelectorAll('i').forEach(function(s, idx) {
+                        s.className = idx < i ? 'bi bi-star-fill active' : 'bi bi-star';
+                    });
+                });
+
+                star.addEventListener('mouseleave', function() {
+                    const val = parseInt(ratingInput.value) || 0;
+                    container.querySelectorAll('i').forEach(function(s, idx) {
+                        s.className = idx < val ? 'bi bi-star-fill active' : 'bi bi-star';
+                    });
+                });
+
+                star.addEventListener('click', function() {
+                    ratingInput.value = i;
+                    container.querySelectorAll('i').forEach(function(s, idx) {
+                        s.className = idx < i ? 'bi bi-star-fill active' : 'bi bi-star';
+                    });
+                });
+
+                container.appendChild(star);
+            }
+        }
+
+        function openPhotoGallery(photos, startIndex) {
+            startIndex = startIndex || 0;
+            if (!photos || photos.length === 0) return;
+
+            const photoModal = new bootstrap.Modal(document.getElementById('photoModal'));
+            const mainPhoto = document.getElementById('modalMainPhoto');
+            const thumbnailsContainer = document.getElementById('modalThumbnails');
+            let currentIndex = startIndex;
+
+            function showPhoto(index) {
+                currentIndex = index;
+                mainPhoto.src = photos[index];
+                thumbnailsContainer.querySelectorAll('img').forEach(function(thumb, i) {
+                    thumb.classList.toggle('active-thumb', i === index);
+                });
+            }
+
+            thumbnailsContainer.innerHTML = '';
+            photos.forEach(function(photo, i) {
+                const thumb = document.createElement('img');
+                thumb.src = photo;
+                thumb.className = 'photo-thumb';
+                if (i === startIndex) thumb.classList.add('active-thumb');
+                thumb.addEventListener('click', function() { showPhoto(i); });
+                thumbnailsContainer.appendChild(thumb);
+            });
+
+            showPhoto(startIndex);
+            photoModal.show();
+        }
+
+        function renderAll() {
+            const places = getPlaces();
+            renderPlaces('wishlistContainer', places.filter(function(p) { return p.status === 'want'; }), 'wishlistEmpty');
+            renderPlaces('visitedContainer', places.filter(function(p) { return p.status === 'visited'; }), 'visitedEmpty');
+        }
+
+        function renderPlaces(containerId, placesArray, emptyId) {
+            const container = document.getElementById(containerId);
+            const emptyMsg = document.getElementById(emptyId);
+            container.innerHTML = '';
+
+            if (placesArray.length === 0) {
+                emptyMsg.classList.remove('d-none');
+                return;
+            }
+            emptyMsg.classList.add('d-none');
+
+            placesArray.forEach(function(place) {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3';
+
+                let priorityClass = '', priorityEmoji = '';
+                if (place.priority === 'high') { priorityClass = 'priority-high'; priorityEmoji = '🔥'; }
+                else if (place.priority === 'medium') { priorityClass = 'priority-medium'; priorityEmoji = '🙂'; }
+                else { priorityClass = 'priority-low'; priorityEmoji = '💭'; }
+
+                const photos = place.photos || [];
+                const mainImg = photos.length > 0 ? photos[0] : 'https://placehold.co/400x200/e2e8f0/64748b?text=Нет+фото';
+
+                let thumbsHTML = '';
+                if (photos.length > 1) {
+                    thumbsHTML = '<div class="d-flex gap-1 mt-2 flex-wrap">';
+                    photos.forEach(function(photo, idx) {
+                        thumbsHTML += '<img src="' + photo + '" class="photo-thumb" onclick="event.stopPropagation(); openPhotoGallery(' + JSON.stringify(photos).replace(/"/g, '&quot;') + ', ' + idx + ')" title="Просмотреть фото">';
+                    });
+                    thumbsHTML += '</div>';
+                }
+
+                // Кнопка на альбом
+                let albumButtonHTML = '';
+                if (place.album) {
+                    albumButtonHTML = '<a href="' + place.album + '" target="_blank" class="btn btn-sm btn-outline-info mt-2 w-100"><i class="bi bi-images"></i> Смотреть все фото</a>';
+                }
+
+                let starsHTML = '';
+                if (place.status === 'visited') {
+                    starsHTML = '<div class="d-flex justify-content-between align-items-center mt-2">' +
+                        '<small class="text-muted">📅 ' + (place.date || 'Дата не указана') + '</small>' +
+                        '<span class="star-rating">' +
+                        '<i class="bi bi-star-fill active"></i>'.repeat(place.rating || 0) +
+                        '<i class="bi bi-star"></i>'.repeat(5 - (place.rating || 0)) +
+                        '</span></div>';
+                }
+
+                col.innerHTML = '<div class="card h-100 shadow-sm ' + priorityClass + '">' +
+                    '<img src="' + mainImg + '" class="card-img-top" alt="' + place.name + '"' +
+                    (photos.length > 0 ? ' onclick="openPhotoGallery(' + JSON.stringify(photos).replace(/"/g, '&quot;') + ', 0)" style="cursor:pointer" title="Нажмите для просмотра галереи"' : '') + '>' +
+                    '<div class="card-body d-flex flex-column">' +
+                    '<h5 class="card-title">' + priorityEmoji + ' ' + place.name + '</h5>' +
+                    '<p class="card-text text-muted small flex-grow-1">' + (place.description || 'Нет описания') + '</p>' +
+                    thumbsHTML +
+                    starsHTML +
+                    albumButtonHTML +
+                    '<div class="mt-2 d-flex gap-1">' +
+                    (place.status === 'want' ? '<button class="btn btn-sm btn-outline-success" onclick="markVisited(' + place.id + ')"><i class="bi bi-check-lg"></i> Был здесь</button>' : '') +
+                    '<button class="btn btn-sm btn-outline-warning" onclick="editPlace(' + place.id + ')"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-danger" onclick="deletePlace(' + place.id + ')"><i class="bi bi-trash"></i></button>' +
+                    '</div></div></div>';
+                container.appendChild(col);
+            });
+        }
+
+        function markVisited(id) {
+            const places = getPlaces();
+            const place = places.find(function(p) { return p.id === id; });
+            if (place) {
+                place.status = 'visited';
+                place.date = new Date().toISOString().split('T')[0];
+                place.rating = 0;
+                savePlaces(places);
+                renderAll();
+            }
+        }
+
+        function deletePlace(id) {
+            if (!confirm('Удалить это место?')) return;
+            let places = getPlaces();
+            places = places.filter(function(p) { return p.id !== id; });
+            savePlaces(places);
+            renderAll();
+        }
+
+        function editPlace(id) {
+            const places = getPlaces();
+            const place = places.find(function(p) { return p.id === id; });
+            if (!place) return;
+
+            document.getElementById('editId').value = place.id;
+            document.getElementById('nameInput').value = place.name;
+            document.getElementById('photosInput').value = (place.photos || []).join(', ');
+            document.getElementById('albumInput').value = place.album || '';
+            document.getElementById('descInput').value = place.description || '';
+            document.getElementById('priorityInput').value = place.priority;
+            document.getElementById('statusInput').value = place.status;
+
+            document.getElementById('formTitle').textContent = '✏️ Редактировать место';
+            document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Сохранить изменения';
+            document.getElementById('cancelEditBtn').classList.remove('d-none');
+
+            const visitedFields = document.getElementById('visitedFields');
+            if (place.status === 'visited') {
+                visitedFields.classList.remove('d-none');
+                document.getElementById('dateInput').value = place.date || '';
+                setupStarRating(place.rating || 0);
+            } else {
+                visitedFields.classList.add('d-none');
+                setupStarRating(0);
+            }
+
+            new bootstrap.Tab(document.querySelector('#travelTabs button[data-bs-target="#addForm"]')).show();
+        }
+
+        function resetForm() {
+            document.getElementById('placeForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').textContent = 'Новое место';
+            document.getElementById('submitBtn').innerHTML = '<i class="bi bi-plus-circle"></i> Добавить место';
+            document.getElementById('cancelEditBtn').classList.add('d-none');
+            document.getElementById('visitedFields').classList.add('d-none');
+            setupStarRating(0);
+        }
+
+        function setupForm() {
+            const form = document.getElementById('placeForm');
+            const statusSelect = document.getElementById('statusInput');
+            const visitedFields = document.getElementById('visitedFields');
+            const cancelBtn = document.getElementById('cancelEditBtn');
+
+            statusSelect.addEventListener('change', function() {
+                if (this.value === 'visited') {
+                    visitedFields.classList.remove('d-none');
+                    setupStarRating(parseInt(document.getElementById('ratingInput').value) || 0);
+                } else {
+                    visitedFields.classList.add('d-none');
+                }
+            });
+
+            cancelBtn.addEventListener('click', function() {
+                resetForm();
+                new bootstrap.Tab(document.querySelector('#travelTabs button[data-bs-target="#wishlist"]')).show();
+            });
+
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const editId = document.getElementById('editId').value;
+                const name = document.getElementById('nameInput').value.trim();
+                if (!name) { alert('⚠️ Введите название места!'); return; }
+
+                const photosRaw = document.getElementById('photosInput').value.trim();
+                const photos = photosRaw ? photosRaw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; }) : [];
+                const album = document.getElementById('albumInput').value.trim();
+                const status = document.getElementById('statusInput').value;
+
+                const placeData = {
+                    name: name,
+                    photos: photos,
+                    album: album || '',
+                    description: document.getElementById('descInput').value.trim(),
+                    priority: document.getElementById('priorityInput').value,
+                    status: status,
+                    date: status === 'visited' ? document.getElementById('dateInput').value : '',
+                    rating: status === 'visited' ? parseInt(document.getElementById('ratingInput').value) || 0 : 0
+                };
+
+                if (editId) {
+                    const places = getPlaces();
+                    const index = places.findIndex(function(p) { return p.id === parseInt(editId); });
+                    if (index !== -1) { places[index] = Object.assign({}, places[index], placeData); savePlaces(places); }
+                } else {
+                    placeData.id = Date.now();
+                    const places = getPlaces();
+                    places.push(placeData);
+                    savePlaces(places);
+                }
+
+                resetForm();
+                renderAll();
+                new bootstrap.Tab(document.querySelector('#travelTabs button[data-bs-target="#wishlist"]')).show();
+                alert(editId ? '✅ Место обновлено!' : '✅ Место добавлено!');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setupStarRating(0);
+            setupForm();
+            renderAll();
+            document.querySelectorAll('#travelTabs button').forEach(function(btn) {
+                btn.addEventListener('shown.bs.tab', renderAll);
+            });
+        });
+    </script>
+</body>
+</html>
