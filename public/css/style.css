@@ -1,0 +1,125 @@
+/* ==================== style.css ==================== */
+/* Все стили сайта в одном файле */
+
+/* Карточки мест */
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Приоритеты (цветная полоса слева) */
+.priority-high {
+    border-left: 5px solid #dc3545;
+}
+
+.priority-medium {
+    border-left: 5px solid #ffc107;
+}
+
+.priority-low {
+    border-left: 5px solid #0d6efd;
+}
+
+/* Миниатюры фото в галерее */
+.photo-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.photo-thumb:hover,
+.photo-thumb.active-thumb {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
+}
+
+/* Главное фото в модальном окне */
+#modalMainPhoto {
+    max-height: 70vh;
+    width: 100%;
+    object-fit: contain;
+    background: #000;
+}
+
+/* Звёздочки рейтинга */
+.star-rating .bi {
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #ccc;
+    transition: color 0.15s;
+}
+
+.star-rating .bi.active,
+.star-rating .bi:hover {
+    color: gold;
+}
+
+/* Вкладки */
+.tab-content > .tab-pane {
+    display: none;
+}
+
+.tab-content > .active {
+    display: block;
+}
+
+/* Фишки списков (Мои, Аня, Дима...) */
+.list-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    background: white;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.list-chip:hover {
+    border-color: #0d6efd;
+}
+
+.list-chip.active {
+    border-color: #0d6efd;
+    background: #e8f0fe;
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+.list-chip .remove-friend {
+    cursor: pointer;
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
+.list-chip .remove-friend:hover {
+    opacity: 1;
+    color: #dc3545;
+}
+
+/* Кнопка "Добавить друга" */
+.add-friend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 2px dashed #adb5bd;
+    background: transparent;
+    color: #6c757d;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+}
+
+.add-friend-chip:hover {
+    border-color: #198754;
+    color: #198754;
+}
