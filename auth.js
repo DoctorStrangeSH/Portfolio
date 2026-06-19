@@ -1,56 +1,34 @@
 // ==================== auth.js ====================
-// Авторизация через Google
+const auth = window.firebaseAuth;
+const db = window.firebaseDb;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const loginScreen = document.getElementById('loginScreen');
-    const appScreen = document.getElementById('appScreen');
-    const userName = document.getElementById('userName');
-    const myUserId = document.getElementById('myUserId');
-    
-    const auth = window.firebaseAuth;
-    
-    // Вход
-    loginBtn.addEventListener('click', async () => {
-        try {
-            const provider = new window.GoogleAuthProvider();
-            await window.signInWithPopup(auth, provider);
-        } catch (error) {
-            alert('Ошибка входа: ' + error.message);
+document.getElementById('loginBtn').addEventListener('click', async () => {
+    try {
+        await window.signInWithPopup(auth, new window.GoogleAuthProvider());
+    } catch (e) {
+        alert('Ошибка входа: ' + e.message);
+    }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => window.signOut(auth));
+
+window.onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        window.currentUser = user;
+        document.getElementById('loginScreen').classList.add('d-none');
+        document.getElementById('appScreen').classList.remove('d-none');
+        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
+        document.getElementById('myUserId').textContent = user.uid;
+        
+        const ref = window.firebaseDb.doc(db, 'users', user.uid);
+        if (!(await window.getDoc(ref)).exists()) {
+            await window.setDoc(ref, { name: user.displayName, email: user.email, friends: [], createdAt: Date.now() });
         }
-    });
-    
-    // Выход
-    logoutBtn.addEventListener('click', () => window.signOut(auth));
-    
-    // Отслеживание состояния
-    window.onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            window.currentUser = user;
-            loginScreen.classList.add('d-none');
-            appScreen.classList.remove('d-none');
-            userName.textContent = user.displayName.split(' ')[0];
-            
-            if (myUserId) {
-                myUserId.textContent = user.uid;
-            }
-            
-            // Создаём профиль на сервере
-            try {
-                await window.API.createProfile();
-            } catch (error) {
-                console.error('Ошибка создания профиля:', error);
-            }
-            
-            // Загружаем друзей и запускаем приложение
-            if (window.initApp) {
-                window.initApp();
-            }
-        } else {
-            window.currentUser = null;
-            loginScreen.classList.remove('d-none');
-            appScreen.classList.add('d-none');
-        }
-    });
+        
+        if (window.initApp) window.initApp();
+    } else {
+        window.currentUser = null;
+        document.getElementById('loginScreen').classList.remove('d-none');
+        document.getElementById('appScreen').classList.add('d-none');
+    }
 });
