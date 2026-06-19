@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Мой Мир ✨</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-light">
+
+    <!-- ЭКРАН ВХОДА -->
+    <div id="loginScreen" class="container text-center py-5">
+        <i class="bi bi-airplane" style="font-size: 5rem; color: #0d6efd;"></i>
+        <h1 class="mt-3">Мой Мир</h1>
+        <p class="text-muted">Войдите через Google, чтобы увидеть свои места</p>
+        <button id="loginBtn" class="btn btn-primary btn-lg px-5">
+            <i class="bi bi-google"></i> Войти
+        </button>
+    </div>
+
+    <!-- ОСНОВНОЙ ЭКРАН -->
+    <div id="appScreen" class="d-none">
+        <nav class="navbar bg-primary sticky-top" data-bs-theme="dark">
+            <div class="container">
+                <span class="navbar-brand">✨ Мой Мир</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-white small" id="userName"></span>
+                    <button id="logoutBtn" class="btn btn-outline-light btn-sm">Выйти</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container my-3">
+            <!-- ФИШКИ СПИСКОВ -->
+            <div class="d-flex gap-2 flex-wrap align-items-center mb-3" id="listChips"></div>
+
+            <!-- ВКЛАДКИ -->
+            <ul class="nav nav-tabs mb-3" id="travelTabs">
+                <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#wishlist">🌍 Хочу посетить</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#visited">✅ Посетил</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#addForm">➕ Добавить</button></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="wishlist">
+                    <div class="row" id="wishlistContainer"></div>
+                    <div id="wishlistEmpty" class="text-center py-5 text-muted">
+                        <i class="bi bi-map" style="font-size: 3rem;"></i>
+                        <p>Пока нет мест. Добавьте первое!</p>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="visited">
+                    <div class="row" id="visitedContainer"></div>
+                    <div id="visitedEmpty" class="text-center py-5 text-muted">
+                        <p>Вы пока нигде не были.</p>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="addForm">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8 col-lg-6">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <h4 class="mb-3" id="formTitle">Новое место</h4>
+                                    <form id="placeForm">
+                                        <input type="hidden" id="editId" value="">
+                                        <div class="mb-3">
+                                            <label class="form-label">Название *</label>
+                                            <input type="text" class="form-control" id="nameInput" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Фото (через запятую)</label>
+                                            <textarea class="form-control" id="photosInput" rows="2"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">🔗 Альбом Flickr</label>
+                                            <input type="url" class="form-control" id="albumInput">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Описание</label>
+                                            <textarea class="form-control" id="descInput" rows="2"></textarea>
+                                        </div>
+                                        <div class="row g-3 mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Приоритет</label>
+                                                <select class="form-select" id="priorityInput">
+                                                    <option value="high">🔥 Очень хочу</option>
+                                                    <option value="medium" selected>🙂 Было бы круто</option>
+                                                    <option value="low">💭 Когда-нибудь</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Статус</label>
+                                                <select class="form-select" id="statusInput">
+                                                    <option value="want" selected>Хочу посетить</option>
+                                                    <option value="visited">Уже посетил</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div id="visitedFields" class="d-none">
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Дата</label>
+                                                    <input type="date" class="form-control" id="dateInput">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label">Оценка</label>
+                                                    <div class="star-rating d-flex gap-1 mt-1" id="starRating"></div>
+                                                    <input type="hidden" id="ratingInput" value="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-success flex-grow-1" id="submitBtn">
+                                                <i class="bi bi-plus-circle"></i> Добавить место
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary d-none" id="cancelEditBtn">Отмена</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКИ -->
+    <div class="modal fade" id="addFriendModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">👤 Добавить друга</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-secondary small mb-3">
+                        <strong>Ваш ID:</strong> <code id="myUserId">...</code>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="copyIdBtn">📋 Копировать</button>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="friendIdInput" placeholder="Вставьте ID друга">
+                        <button class="btn btn-success" id="addFriendBtn">➕ Добавить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="photoModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalMainPhoto" src="" alt="Фото" class="rounded mb-3">
+                    <div id="modalThumbnails" class="d-flex justify-content-center gap-2 flex-wrap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (только для авторизации, без доступа к БД!) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        // Это БЕЗОПАСНО: только для авторизации, не для доступа к БД
+        const firebaseConfig = {
+            apiKey: "ВАШ_API_KEY",
+            authDomain: "ВАШ_ПРОЕКТ.firebaseapp.com",
+            projectId: "ВАШ_ПРОЕКТ",
+            appId: "ВАШ_APP_ID"
+        };
+
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.firebaseAuth = getAuth(window.firebaseApp);
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.signOut = signOut;
+    </script>
+
+    <!-- Наши модули -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/stars.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/friends.js"></script>
+    <script src="js/places.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
