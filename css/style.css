@@ -1,0 +1,113 @@
+/* ==================== style.css ==================== */
+
+/* Карточки */
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Приоритеты */
+.priority-high {
+    border-left: 5px solid #dc3545;
+}
+
+.priority-medium {
+    border-left: 5px solid #ffc107;
+}
+
+.priority-low {
+    border-left: 5px solid #0d6efd;
+}
+
+/* Галерея */
+.photo-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.photo-thumb:hover,
+.photo-thumb.active-thumb {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
+}
+
+#modalMainPhoto {
+    max-height: 70vh;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* Звёзды */
+.star-rating .bi {
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: #dee2e6;
+    transition: color 0.15s;
+}
+
+.star-rating .bi.active,
+.star-rating .bi:hover {
+    color: #ffc107;
+}
+
+/* Вкладки */
+.tab-content > .tab-pane {
+    display: none;
+}
+
+.tab-content > .active {
+    display: block;
+}
+
+/* Фишки списков */
+.list-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    background: white;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.list-chip:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+}
+
+.list-chip.active {
+    border-color: #0d6efd;
+    background: #e8f0fe;
+    color: #0d6efd;
+    font-weight: 500;
+}
+
+/* Скролл для фишек */
+#listChips {
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+#listChips::-webkit-scrollbar {
+    height: 4px;
+}
+
+#listChips::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 4px;
+}
+
+/* Экран входа */
+#loginScreen {
+    min-height: 100vh;
+}
