@@ -18,26 +18,29 @@ window.getCollectionPath = function () {
 window.loadPlaces = async function () {
     if (!window.currentUser) return;
     
-    const path = window.getCollectionPath();
-    const q = window.query(window.collection(db, path));
-    const snapshot = await window.getDocs(q);
-    
-    window.places = [];
-    snapshot.forEach(doc => {
-        window.places.push({
-            id: doc.id,
-            ...doc.data(),
-            _firestoreId: doc.id
+    try {
+        const path = window.getCollectionPath();
+        const q = window.query(window.collection(db, path));
+        const snapshot = await window.getDocs(q);
+        
+        window.places = [];
+        snapshot.forEach(doc => {
+            window.places.push({
+                id: doc.id,
+                ...doc.data(),
+                _firestoreId: doc.id
+            });
         });
-    });
-    
-    // Сортировка: новые сверху
-    window.places.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    
-    renderAll();
+        
+        window.places.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        console.log('✅ Загружено мест:', window.places.length);
+        renderAll();
+    } catch (error) {
+        console.error('❌ Ошибка загрузки мест:', error);
+    }
 };
 
-// ========== ОТРИСОВКА ВСЕХ КАРТОЧЕК ==========
+// ========== ОТРИСОВКА ==========
 function renderAll() {
     const wishlist = window.places.filter(p => p.status === 'want');
     const visited = window.places.filter(p => p.status === 'visited');
@@ -58,6 +61,19 @@ function renderSection(containerId, placesArray, emptyId) {
     
     if (placesArray.length === 0) {
         emptyMsg.classList.remove('d-none');
+        // Вешаем обработчик на кнопку "Добавить первое"
+        setTimeout(() => {
+            const addBtn = emptyMsg.querySelector('.switch-to-add');
+            if (addBtn) {
+                addBtn.onclick = function() {
+                    const addTab = document.querySelector('#mainTabs button[data-bs-target="#addTab"]');
+                    if (addTab) {
+                        const tab = new bootstrap.Tab(addTab);
+                        tab.show();
+                    }
+                };
+            }
+        }, 100);
         return;
     }
     
@@ -68,16 +84,14 @@ function renderSection(containerId, placesArray, emptyId) {
         container.appendChild(card);
     });
     
-    // Вешаем обработчики
     attachCardHandlers();
 }
 
-// ========== СОЗДАНИЕ КАРТОЧКИ ==========
+// ========== КАРТОЧКА ==========
 function createPlaceCard(place) {
     const col = document.createElement('div');
     col.className = 'col-md-6 col-lg-4';
     
-    // Приоритет
     const priorityMap = {
         high: { class: 'priority-high', emoji: '🔥' },
         medium: { class: 'priority-medium', emoji: '🙂' },
@@ -85,7 +99,6 @@ function createPlaceCard(place) {
     };
     const priority = priorityMap[place.priority] || priorityMap.medium;
     
-    // Фото
     const photos = place.photos || [];
     const mainPhoto = photos.length > 0 
         ? photos[0] 
@@ -93,7 +106,6 @@ function createPlaceCard(place) {
     
     const photosJson = JSON.stringify(photos).replace(/"/g, '&quot;');
     
-    // Миниатюры
     let thumbnailsHTML = '';
     if (photos.length > 1) {
         thumbnailsHTML = '<div class="d-flex gap-1 mt-2 flex-wrap">';
@@ -107,44 +119,36 @@ function createPlaceCard(place) {
         thumbnailsHTML += '</div>';
     }
     
-    // Альбом
     let albumHTML = '';
     if (place.album) {
         albumHTML = `
-            <a href="${place.album}" target="_blank" 
-               class="btn btn-sm btn-outline-info mt-2 w-100">
+            <a href="${place.album}" target="_blank" class="btn btn-sm btn-outline-info mt-2 w-100">
                 <i class="bi bi-images me-1"></i>Смотреть альбом
             </a>
         `;
     }
     
-    // Звёзды
     let starsHTML = '';
     if (place.status === 'visited') {
-        const filledStars = '<i class="bi bi-star-fill active"></i>'.repeat(place.rating || 0);
-        const emptyStars = '<i class="bi bi-star"></i>'.repeat(5 - (place.rating || 0));
-        
+        const filled = '<i class="bi bi-star-fill active"></i>'.repeat(place.rating || 0);
+        const empty = '<i class="bi bi-star"></i>'.repeat(5 - (place.rating || 0));
         starsHTML = `
             <div class="d-flex justify-content-between align-items-center mt-2">
-                <small class="text-muted">
-                    <i class="bi bi-calendar3 me-1"></i>${place.date || 'Дата не указана'}
-                </small>
-                <span class="star-rating">${filledStars}${emptyStars}</span>
+                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${place.date || 'Дата не указана'}</small>
+                <span class="star-rating">${filled}${empty}</span>
             </div>
         `;
     }
     
-    // Автор
     let authorHTML = '';
     if (place.author && window.currentList !== 'my') {
         authorHTML = `<small class="text-muted d-block mb-1">✍️ ${place.author}</small>`;
     }
     
-    // Кнопки действий
     let markButton = '';
     if (place.status === 'want') {
         markButton = `
-            <button class="btn btn-sm btn-outline-success mark-visited-btn" data-id="${place._firestoreId}">
+            <button class="btn btn-sm btn-outline-success mark-btn" data-id="${place._firestoreId}">
                 <i class="bi bi-check-lg me-1"></i>Был(а) здесь
             </button>
         `;
@@ -163,10 +167,10 @@ function createPlaceCard(place) {
                 ${albumHTML}
                 <div class="mt-2 d-flex gap-1">
                     ${markButton}
-                    <button class="btn btn-sm btn-outline-warning edit-place-btn" data-id="${place._firestoreId}">
+                    <button class="btn btn-sm btn-outline-warning edit-btn" data-id="${place._firestoreId}">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger delete-place-btn" data-id="${place._firestoreId}">
+                    <button class="btn btn-sm btn-outline-danger del-btn" data-id="${place._firestoreId}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -177,57 +181,43 @@ function createPlaceCard(place) {
     return col;
 }
 
-// ========== ОБРАБОТЧИКИ КНОПОК ==========
+// ========== ОБРАБОТЧИКИ ==========
 function attachCardHandlers() {
-    // Отметить как посещённое
-    document.querySelectorAll('.mark-visited-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
+    document.querySelectorAll('.mark-btn').forEach(btn => {
+        btn.onclick = async () => {
             const id = btn.dataset.id;
-            await window.updateDoc(
-                window.doc(db, window.getCollectionPath(), id),
-                {
-                    status: 'visited',
-                    date: new Date().toISOString().split('T')[0],
-                    rating: 0
-                }
-            );
+            await window.updateDoc(window.doc(db, window.getCollectionPath(), id), {
+                status: 'visited',
+                date: new Date().toISOString().split('T')[0],
+                rating: 0
+            });
             await window.loadPlaces();
-        });
+        };
     });
     
-    // Редактировать
-    document.querySelectorAll('.edit-place-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = () => {
             const id = btn.dataset.id;
             const place = window.places.find(p => p._firestoreId === id);
             if (!place) return;
-            
             fillForm(place);
-            
-            // Переключаем на вкладку добавления
             const addTab = document.querySelector('#mainTabs button[data-bs-target="#addTab"]');
-            if (addTab) {
-                new bootstrap.Tab(addTab).show();
-            }
-        });
+            if (addTab) new bootstrap.Tab(addTab).show();
+        };
     });
     
-    // Удалить
-    document.querySelectorAll('.delete-place-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
+    document.querySelectorAll('.del-btn').forEach(btn => {
+        btn.onclick = async () => {
             const id = btn.dataset.id;
             const place = window.places.find(p => p._firestoreId === id);
-            const name = place ? place.name : 'это место';
-            
-            if (!confirm(`Удалить "${name}"?`)) return;
-            
+            if (!confirm(`Удалить "${place?.name || 'место'}"?`)) return;
             await window.deleteDoc(window.doc(db, window.getCollectionPath(), id));
             await window.loadPlaces();
-        });
+        };
     });
 }
 
-// ========== ЗАПОЛНЕНИЕ ФОРМЫ ПРИ РЕДАКТИРОВАНИИ ==========
+// ========== ФОРМА ==========
 function fillForm(place) {
     document.getElementById('editId').value = place._firestoreId;
     document.getElementById('nameInput').value = place.name;
@@ -237,12 +227,10 @@ function fillForm(place) {
     document.getElementById('priorityInput').value = place.priority || 'medium';
     document.getElementById('statusInput').value = place.status;
     
-    // Меняем заголовок и кнопку
-    document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Редактировать место';
+    document.getElementById('formTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Редактировать';
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i>Сохранить';
     document.getElementById('cancelEditBtn').classList.remove('d-none');
     
-    // Поля для посещённых
     const visitedFields = document.getElementById('visitedFields');
     if (place.status === 'visited') {
         visitedFields.classList.remove('d-none');
@@ -254,11 +242,9 @@ function fillForm(place) {
     }
 }
 
-// ========== ЗВЁЗДОЧКИ ==========
 function setupStarRating(initial = 0) {
     const container = document.getElementById('starRating');
     if (!container) return;
-    
     container.innerHTML = '';
     const ratingInput = document.getElementById('ratingInput');
     if (ratingInput) ratingInput.value = initial;
@@ -295,36 +281,32 @@ function setupStarRating(initial = 0) {
 
 window.setupStarRating = setupStarRating;
 
-// ========== ГАЛЕРЕЯ ФОТО ==========
+// ========== ГАЛЕРЕЯ ==========
 window.openGallery = function (photos, startIndex = 0) {
     if (!photos || photos.length === 0) return;
     
-    const modal = new bootstrap.Modal(document.getElementById('photoModal'));
+    const modalEl = document.getElementById('photoModal');
+    if (!modalEl) return;
+    
+    const modal = new bootstrap.Modal(modalEl);
     const mainPhoto = document.getElementById('modalMainPhoto');
     const thumbnailsContainer = document.getElementById('modalThumbnails');
-    
     let currentIndex = startIndex;
     
     function showPhoto(index) {
         currentIndex = index;
         mainPhoto.src = photos[index];
-        
         thumbnailsContainer.querySelectorAll('img').forEach((thumb, i) => {
             thumb.classList.toggle('active-thumb', i === index);
         });
     }
     
     thumbnailsContainer.innerHTML = '';
-    
     photos.forEach((photo, index) => {
         const thumb = document.createElement('img');
         thumb.src = photo;
         thumb.className = 'photo-thumb';
-        
-        if (index === startIndex) {
-            thumb.classList.add('active-thumb');
-        }
-        
+        if (index === startIndex) thumb.classList.add('active-thumb');
         thumb.addEventListener('click', () => showPhoto(index));
         thumbnailsContainer.appendChild(thumb);
     });
@@ -335,7 +317,8 @@ window.openGallery = function (photos, startIndex = 0) {
 
 // ========== ФОРМА ДОБАВЛЕНИЯ ==========
 function resetForm() {
-    document.getElementById('placeForm').reset();
+    const form = document.getElementById('placeForm');
+    if (form) form.reset();
     document.getElementById('editId').value = '';
     document.getElementById('formTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Новое место';
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i>Добавить место';
@@ -344,104 +327,86 @@ function resetForm() {
     setupStarRating(0);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Кнопка "Отмена"
-    const cancelBtn = document.getElementById('cancelEditBtn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', resetForm);
+// Кнопка "Отмена"
+document.getElementById('cancelEditBtn')?.addEventListener('click', resetForm);
+
+// Переключение статуса
+document.getElementById('statusInput')?.addEventListener('change', function () {
+    const visitedFields = document.getElementById('visitedFields');
+    if (this.value === 'visited') {
+        visitedFields.classList.remove('d-none');
+        setupStarRating(parseInt(document.getElementById('ratingInput')?.value) || 0);
+    } else {
+        visitedFields.classList.add('d-none');
     }
-    
-    // Переключение статуса
-    const statusSelect = document.getElementById('statusInput');
-    if (statusSelect) {
-        statusSelect.addEventListener('change', function () {
-            const visitedFields = document.getElementById('visitedFields');
-            if (this.value === 'visited') {
-                visitedFields.classList.remove('d-none');
-                setupStarRating(parseInt(document.getElementById('ratingInput')?.value) || 0);
-            } else {
-                visitedFields.classList.add('d-none');
-            }
-        });
-    }
-    
-    // Отправка формы
-    const form = document.getElementById('placeForm');
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const editId = document.getElementById('editId').value;
-            const name = document.getElementById('nameInput').value.trim();
-            
-            if (!name) {
-                alert('Введите название места!');
-                return;
-            }
-            
-            const photosRaw = document.getElementById('photosInput').value.trim();
-            const photos = photosRaw 
-                ? photosRaw.split(',').map(s => s.trim()).filter(s => s.length > 0) 
-                : [];
-            
-            const status = document.getElementById('statusInput').value;
-            
-            const data = {
-                name: name,
-                photos: photos,
-                album: document.getElementById('albumInput').value.trim() || '',
-                description: document.getElementById('descInput').value.trim(),
-                priority: document.getElementById('priorityInput').value,
-                status: status,
-                date: status === 'visited' ? document.getElementById('dateInput').value : '',
-                rating: status === 'visited' 
-                    ? parseInt(document.getElementById('ratingInput').value) || 0 
-                    : 0,
-                author: window.currentUser?.displayName?.split(' ')[0] || 'Я',
-                updatedAt: Date.now()
-            };
-            
-            try {
-                if (editId) {
-                    await window.updateDoc(
-                        window.doc(db, window.getCollectionPath(), editId), 
-                        data
-                    );
-                } else {
-                    data.createdAt = Date.now();
-                    await window.addDoc(
-                        window.collection(db, window.getCollectionPath()), 
-                        data
-                    );
-                }
-                
-                resetForm();
-                await window.loadPlaces();
-                
-                // Переключаем на "Хочу посетить"
-                const wishlistTab = document.querySelector('#mainTabs button[data-bs-target="#wishlistTab"]');
-                if (wishlistTab) {
-                    new bootstrap.Tab(wishlistTab).show();
-                }
-                
-                alert(editId ? '✅ Место обновлено!' : '✅ Место добавлено!');
-            } catch (error) {
-                console.error('Ошибка сохранения:', error);
-                alert('❌ Не удалось сохранить. Попробуйте ещё раз.');
-            }
-        });
-    }
-    
-    // Кнопки "Добавить первое" на пустых экранах
-    document.querySelectorAll('.switch-to-add').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const addTab = document.querySelector('#mainTabs button[data-bs-target="#addTab"]');
-            if (addTab) {
-                new bootstrap.Tab(addTab).show();
-            }
-        });
-    });
-    
-    // Инициализация звёздочек
-    setupStarRating(0);
 });
+
+// Отправка формы
+document.getElementById('placeForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const editId = document.getElementById('editId').value;
+    const name = document.getElementById('nameInput').value.trim();
+    
+    if (!name) {
+        alert('Введите название места!');
+        return;
+    }
+    
+    const photosRaw = document.getElementById('photosInput').value.trim();
+    const photos = photosRaw 
+        ? photosRaw.split(',').map(s => s.trim()).filter(s => s.length > 0) 
+        : [];
+    
+    const status = document.getElementById('statusInput').value;
+    
+    const data = {
+        name: name,
+        photos: photos,
+        album: document.getElementById('albumInput').value.trim() || '',
+        description: document.getElementById('descInput').value.trim(),
+        priority: document.getElementById('priorityInput').value,
+        status: status,
+        date: status === 'visited' ? document.getElementById('dateInput').value : '',
+        rating: status === 'visited' ? parseInt(document.getElementById('ratingInput').value) || 0 : 0,
+        author: window.currentUser?.displayName?.split(' ')[0] || 'Я',
+        updatedAt: Date.now()
+    };
+    
+    console.log('📤 Отправка данных:', data);
+    console.log('📁 Коллекция:', window.getCollectionPath());
+    
+    try {
+        if (editId) {
+            await window.updateDoc(window.doc(db, window.getCollectionPath(), editId), data);
+            console.log('✅ Обновлено');
+        } else {
+            data.createdAt = Date.now();
+            const docRef = await window.addDoc(window.collection(db, window.getCollectionPath()), data);
+            console.log('✅ Добавлено, ID:', docRef.id);
+        }
+        
+        resetForm();
+        await window.loadPlaces();
+        
+        const wishlistTab = document.querySelector('#mainTabs button[data-bs-target="#wishlistTab"]');
+        if (wishlistTab) new bootstrap.Tab(wishlistTab).show();
+        
+        alert(editId ? '✅ Место обновлено!' : '✅ Место добавлено!');
+    } catch (error) {
+        console.error('❌ Ошибка сохранения:', error);
+        alert('❌ Ошибка: ' + (error.message || 'Не удалось сохранить'));
+    }
+});
+
+// Кнопки "Добавить первое" — вешаем через делегирование
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.switch-to-add')) {
+        const addTab = document.querySelector('#mainTabs button[data-bs-target="#addTab"]');
+        if (addTab) new bootstrap.Tab(addTab).show();
+    }
+});
+
+// Инициализация
+setupStarRating(0);
+console.log('✅ places.js загружен');
