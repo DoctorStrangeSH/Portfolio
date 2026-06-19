@@ -1,30 +1,38 @@
 // ==================== app.js ====================
-// Точка входа в приложение
 
 window.initApp = async function () {
-    // Настраиваем звёздочки
-    window.setupStarRating(0);
-    
-    // Настраиваем форму
-    window.setupForm();
+    // Инициализируем звёздочки
+    if (typeof window.setupStarRating === 'function') {
+        window.setupStarRating(0);
+    }
     
     // Загружаем друзей
-    await window.loadFriends();
+    if (typeof window.loadFriends === 'function') {
+        await window.loadFriends();
+    }
     
     // Загружаем места
-    await window.loadPlaces();
+    if (typeof window.loadPlaces === 'function') {
+        await window.loadPlaces();
+    }
     
-    // Обновление при переключении вкладок
-    document.querySelectorAll('#travelTabs button').forEach(btn => {
+    // Слушаем изменения друзей
+    if (typeof window.listenFriends === 'function') {
+        window.listenFriends();
+    }
+    
+    // Обработчики переключения вкладок
+    document.querySelectorAll('#mainTabs button').forEach(btn => {
         btn.addEventListener('shown.bs.tab', () => {
-            window.renderAll();
+            if (typeof window.renderAll === 'function') {
+                window.renderAll();
+            }
         });
     });
-};
-
-// Функция renderAll должна быть доступна глобально
-window.renderAll = function () {
-    if (window.renderAllCallback) {
-        window.renderAllCallback();
-    }
+    
+    console.log('✅ Приложение готово');
+    console.log('👤 Пользователь:', window.currentUser?.displayName);
+    console.log('📋 Текущий список:', window.currentList);
+    console.log('👥 Друзей:', window.friends?.length || 0);
+    console.log('📍 Мест:', window.places?.length || 0);
 };
