@@ -250,4 +250,50 @@
     .card-img-top {
         height: 150px;
     }
+    
+    /* ==================== ДРУЗЬЯ ==================== */
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #f8f9fa;
+    transition: background 0.2s;
+}
+
+.request-item:hover {
+    background: #e9ecef;
+}
+
+.friend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.2s;
+}
+
+.friend-item:hover {
+    background: #f0f0f0;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-accepted {
+    background: #d4edda;
+    color: #155724;
+}
 }
