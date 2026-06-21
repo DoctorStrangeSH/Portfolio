@@ -1,53 +1,56 @@
 // ==================== app.js ====================
+window.currentSection = 'travel';
 
-window.initApp = async function () {
-    if (typeof window.setupStarRating === 'function') {
-        window.setupStarRating(0);
-    }
+// Загруженные модули разделов
+const sectionModules = {
+    travel: null,
+    food: null
+};
+
+window.initApp = async function() {
+    // Загружаем модули разделов
+    sectionModules.travel = await import('./travel/travelList.js');
+    sectionModules.food = await import('./food/foodList.js');
     
-    if (typeof window.loadFriends === 'function') {
-        await window.loadFriends();
-    }
+    // Загружаем друзей
+    if (window.loadFriends) await window.loadFriends();
+    if (window.listenFriends) window.listenFriends();
     
-    if (typeof window.loadPlaces === 'function') {
-        await window.loadPlaces();
-    }
-    
-    if (typeof window.listenFriends === 'function') {
-        window.listenFriends();
-    }
-    
-    // Инициализация карты
-    if (typeof window.initMap === 'function') {
-        window.initMap();
-    }
-    
-    // Кнопка карты в навигации
-    document.getElementById('mapViewBtn')?.addEventListener('click', () => {
-        const mapTab = document.querySelector('#mainTabs button[data-bs-target="#mapTab"]');
-        if (mapTab) {
-            new bootstrap.Tab(mapTab).show();
-            setTimeout(() => {
-                if (window.map) window.map.invalidateSize();
-            }, 300);
-        }
-    });
-    
-    document.querySelectorAll('#mainTabs button').forEach(btn => {
-        btn.addEventListener('shown.bs.tab', (e) => {
-            if (e.target.dataset.bsTarget === '#mapTab') {
-                setTimeout(() => {
-                    if (window.map) window.map.invalidateSize();
-                    if (typeof window.renderMapMarkers === 'function') {
-                        window.renderMapMarkers();
-                    }
-                }, 300);
-            }
-            if (typeof window.renderAll === 'function' && e.target.dataset.bsTarget !== '#mapTab') {
-                window.renderAll();
-            }
+    // Меню разделов
+    document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('disabled')) return;
+            
+            document.querySelectorAll('#sectionMenu button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            window.currentSection = btn.dataset.section;
+            loadCurrentSection();
         });
     });
     
-    console.log('✅ Приложение готово (карта, дневник, бюджет, слайдер)');
+    // Загружаем раздел по умолчанию
+    loadCurrentSection();
 };
+
+function loadCurrentSection() {
+    const container = document.getElementById('sectionContainer');
+    if (!container) return;
+    
+    switch (window.currentSection) {
+        case 'travel':
+            if (sectionModules.travel?.renderTravelSection) {
+                sectionModules.travel.renderTravelSection(container);
+            }
+            break;
+        case 'food':
+            if (sectionModules.food?.renderFoodSection) {
+                sectionModules.food.renderFoodSection(container);
+            }
+            break;
+        default:
+            container.innerHTML = '<p class="text-center text-muted py-5">Скоро...</p>';
+    }
+}
+
+console.log('✅ app.js загружен');
