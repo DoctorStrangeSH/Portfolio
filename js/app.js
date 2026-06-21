@@ -1,38 +1,53 @@
 // ==================== app.js ====================
 
 window.initApp = async function () {
-    // Инициализируем звёздочки
     if (typeof window.setupStarRating === 'function') {
         window.setupStarRating(0);
     }
     
-    // Загружаем друзей
     if (typeof window.loadFriends === 'function') {
         await window.loadFriends();
     }
     
-    // Загружаем места
     if (typeof window.loadPlaces === 'function') {
         await window.loadPlaces();
     }
     
-    // Слушаем изменения друзей
     if (typeof window.listenFriends === 'function') {
         window.listenFriends();
     }
     
-    // Обработчики переключения вкладок
+    // Инициализация карты
+    if (typeof window.initMap === 'function') {
+        window.initMap();
+    }
+    
+    // Кнопка карты в навигации
+    document.getElementById('mapViewBtn')?.addEventListener('click', () => {
+        const mapTab = document.querySelector('#mainTabs button[data-bs-target="#mapTab"]');
+        if (mapTab) {
+            new bootstrap.Tab(mapTab).show();
+            setTimeout(() => {
+                if (window.map) window.map.invalidateSize();
+            }, 300);
+        }
+    });
+    
     document.querySelectorAll('#mainTabs button').forEach(btn => {
-        btn.addEventListener('shown.bs.tab', () => {
-            if (typeof window.renderAll === 'function') {
+        btn.addEventListener('shown.bs.tab', (e) => {
+            if (e.target.dataset.bsTarget === '#mapTab') {
+                setTimeout(() => {
+                    if (window.map) window.map.invalidateSize();
+                    if (typeof window.renderMapMarkers === 'function') {
+                        window.renderMapMarkers();
+                    }
+                }, 300);
+            }
+            if (typeof window.renderAll === 'function' && e.target.dataset.bsTarget !== '#mapTab') {
                 window.renderAll();
             }
         });
     });
     
-    console.log('✅ Приложение готово');
-    console.log('👤 Пользователь:', window.currentUser?.displayName);
-    console.log('📋 Текущий список:', window.currentList);
-    console.log('👥 Друзей:', window.friends?.length || 0);
-    console.log('📍 Мест:', window.places?.length || 0);
+    console.log('✅ Приложение готово (карта, дневник, бюджет, слайдер)');
 };
