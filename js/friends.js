@@ -1,5 +1,5 @@
-// ==================== friends.js v2 ====================
-// Заявки, подтверждение, отклонение, удаление
+// ==================== friends.js v3 ====================
+// Полностью рабочие заявки, подтверждение, отклонение, удаление
 
 const db = window.db;
 
@@ -8,7 +8,7 @@ window.incomingRequests = [];
 window.outgoingRequests = [];
 window.currentList = 'my';
 
-// ========== ЗАГРУЗКА ВСЕХ ДАННЫХ ==========
+// ========== ЗАГРУЗКА ==========
 window.loadFriends = async function () {
     if (!window.currentUser) return;
     
@@ -21,6 +21,10 @@ window.loadFriends = async function () {
             window.friends = data.friends || [];
             window.incomingRequests = data.incomingRequests || [];
             window.outgoingRequests = data.outgoingRequests || [];
+        } else {
+            window.friends = [];
+            window.incomingRequests = [];
+            window.outgoingRequests = [];
         }
         
         renderFriendsModal();
@@ -31,7 +35,7 @@ window.loadFriends = async function () {
     }
 };
 
-// ========== ОБНОВЛЕНИЕ БЕЙДЖА ==========
+// ========== БЕЙДЖ ==========
 function updateFriendsBadge() {
     const badge = document.getElementById('friendsBadge');
     if (!badge) return;
@@ -59,7 +63,7 @@ function renderIncomingRequests() {
     
     if (!container) return;
     
-    if (window.incomingRequests.length === 0) {
+    if (!window.incomingRequests || window.incomingRequests.length === 0) {
         container.innerHTML = '<p class="text-muted small text-center py-2">Нет входящих заявок</p>';
         if (badge) badge.classList.add('d-none');
         return;
@@ -87,12 +91,11 @@ function renderIncomingRequests() {
         </div>
     `).join('');
     
-    // Обработчики
     container.querySelectorAll('.accept-btn').forEach(btn => {
-        btn.addEventListener('click', () => acceptRequest(btn.dataset.uid));
+        btn.onclick = () => acceptRequest(btn.dataset.uid);
     });
     container.querySelectorAll('.reject-btn').forEach(btn => {
-        btn.addEventListener('click', () => rejectRequest(btn.dataset.uid));
+        btn.onclick = () => rejectRequest(btn.dataset.uid);
     });
 }
 
@@ -100,7 +103,7 @@ function renderOutgoingRequests() {
     const container = document.getElementById('outgoingRequests');
     if (!container) return;
     
-    if (window.outgoingRequests.length === 0) {
+    if (!window.outgoingRequests || window.outgoingRequests.length === 0) {
         container.innerHTML = '<p class="text-muted small text-center py-2">Нет отправленных заявок</p>';
         return;
     }
@@ -111,9 +114,9 @@ function renderOutgoingRequests() {
                 <strong>${req.name}</strong>
                 <small class="text-muted ms-2">${timeAgoStr(req.sentAt)}</small>
             </div>
-            <div>
+            <div class="d-flex align-items-center gap-2">
                 <span class="status-badge status-pending">⏳ Ожидает</span>
-                <button class="btn btn-sm btn-outline-danger ms-2 cancel-btn" data-uid="${req.uid}">
+                <button class="btn btn-sm btn-outline-danger cancel-btn" data-uid="${req.uid}">
                     <i class="bi bi-x-lg"></i> Отменить
                 </button>
             </div>
@@ -121,7 +124,7 @@ function renderOutgoingRequests() {
     `).join('');
     
     container.querySelectorAll('.cancel-btn').forEach(btn => {
-        btn.addEventListener('click', () => cancelRequest(btn.dataset.uid));
+        btn.onclick = () => cancelRequest(btn.dataset.uid);
     });
 }
 
@@ -129,7 +132,7 @@ function renderFriendsList() {
     const container = document.getElementById('friendsList');
     if (!container) return;
     
-    if (window.friends.length === 0) {
+    if (!window.friends || window.friends.length === 0) {
         container.innerHTML = '<p class="text-muted small text-center py-2">Пока нет друзей</p>';
         return;
     }
@@ -139,11 +142,11 @@ function renderFriendsList() {
             <div class="d-flex align-items-center gap-2">
                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
                      style="width: 32px; height: 32px; font-size: 0.8rem;">
-                    ${friend.name.charAt(0).toUpperCase()}
+                    ${(friend.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
                     <strong>${friend.name}</strong>
-                    <small class="text-muted d-block" style="font-size: 0.7rem;">Друзья с ${new Date(friend.addedAt).toLocaleDateString()}</small>
+                    <small class="text-muted d-block" style="font-size: 0.7rem;">Друзья с ${friend.addedAt ? new Date(friend.addedAt).toLocaleDateString() : 'недавно'}</small>
                 </div>
             </div>
             <button class="btn btn-sm btn-outline-danger remove-friend-btn" data-uid="${friend.uid}">
@@ -153,20 +156,24 @@ function renderFriendsList() {
     `).join('');
     
     container.querySelectorAll('.remove-friend-btn').forEach(btn => {
-        btn.addEventListener('click', () => removeFriend(btn.dataset.uid));
+        btn.onclick = () => removeFriend(btn.dataset.uid);
     });
 }
 
 function timeAgoStr(ts) {
     if (!ts) return '';
     const diff = Date.now() - ts;
-    const d = Math.floor(diff / 86400000);
-    if (d < 1) return 'сегодня';
-    if (d === 1) return 'вчера';
-    return `${d} дн. назад`;
+    if (diff < 60000) return 'только что';
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins} мин. назад`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} ч. назад`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'вчера';
+    return `${days} дн. назад`;
 }
 
-// ========== ФИШКИ СПИСКОВ ==========
+// ========== ФИШКИ ==========
 function renderListChips() {
     const container = document.getElementById('listChips');
     if (!container) return;
@@ -175,7 +182,7 @@ function renderListChips() {
     
     window.friends.forEach(friend => {
         const listId = 'shared_' + friend.uid;
-        html += `<span class="list-chip ${window.currentList === listId ? 'active' : ''}" data-list="${listId}">❤️ ${friend.name.split(' ')[0]}</span>`;
+        html += `<span class="list-chip ${window.currentList === listId ? 'active' : ''}" data-list="${listId}">❤️ ${(friend.name || 'Друг').split(' ')[0]}</span>`;
     });
     
     container.innerHTML = html;
@@ -189,36 +196,36 @@ function renderListChips() {
     });
 }
 
-// ========== ОТПРАВИТЬ ЗАЯВКУ ==========
+// ========== ОТПРАВКА ЗАЯВКИ ==========
 async function sendRequest(targetId) {
     const statusEl = document.getElementById('requestStatus');
     
     if (!targetId) {
-        statusEl.innerHTML = '<span class="text-danger">Введите ID друга</span>';
+        if (statusEl) statusEl.innerHTML = '<span class="text-danger">Введите ID друга</span>';
         return;
     }
     
     if (targetId === window.currentUser.uid) {
-        statusEl.innerHTML = '<span class="text-danger">Нельзя добавить самого себя</span>';
+        if (statusEl) statusEl.innerHTML = '<span class="text-danger">Нельзя добавить самого себя</span>';
         return;
     }
     
     if (window.friends.find(f => f.uid === targetId)) {
-        statusEl.innerHTML = '<span class="text-warning">Уже в друзьях</span>';
+        if (statusEl) statusEl.innerHTML = '<span class="text-warning">Уже в друзьях</span>';
         return;
     }
     
     if (window.outgoingRequests.find(r => r.uid === targetId)) {
-        statusEl.innerHTML = '<span class="text-warning">Заявка уже отправлена</span>';
+        if (statusEl) statusEl.innerHTML = '<span class="text-warning">Заявка уже отправлена</span>';
         return;
     }
     
-    // Проверяем существование пользователя
+    // Проверяем существование
     const targetRef = window.doc(db, 'users', targetId);
     const targetSnap = await window.getDoc(targetRef);
     
     if (!targetSnap.exists()) {
-        statusEl.innerHTML = '<span class="text-danger">Пользователь не найден</span>';
+        if (statusEl) statusEl.innerHTML = '<span class="text-danger">Пользователь не найден</span>';
         return;
     }
     
@@ -234,24 +241,24 @@ async function sendRequest(targetId) {
         sentAt: Date.now()
     };
     
-    // Добавляю в исходящие у себя
+    // Обновляю СЕБЯ — добавляю в исходящие
     const myRef = window.doc(db, 'users', window.currentUser.uid);
-    await window.updateDoc(myRef, {
-        outgoingRequests: window.arrayUnion(theirData)
-    });
+    const myNewOutgoing = [...window.outgoingRequests, theirData];
+    await window.updateDoc(myRef, { outgoingRequests: myNewOutgoing });
     
-    // Добавляю во входящие у получателя
-    await window.updateDoc(targetRef, {
-        incomingRequests: window.arrayUnion(myData)
-    });
+    // Обновляю ДРУГА — добавляю во входящие
+    const friendNewIncoming = [...(targetData.incomingRequests || []), myData];
+    await window.updateDoc(targetRef, { incomingRequests: friendNewIncoming });
     
+    // Очищаю поле
     document.getElementById('friendIdInput').value = '';
-    statusEl.innerHTML = '<span class="text-success">✅ Заявка отправлена!</span>';
+    if (statusEl) statusEl.innerHTML = '<span class="text-success">✅ Заявка отправлена!</span>';
     
-    await window.loadFriends();
+    // Перезагружаю данные
+    await refreshLocalData();
 }
 
-// ========== ПРИНЯТЬ ЗАЯВКУ ==========
+// ========== ПРИНЯТЬ ==========
 async function acceptRequest(fromUid) {
     const request = window.incomingRequests.find(r => r.uid === fromUid);
     if (!request) return;
@@ -259,43 +266,31 @@ async function acceptRequest(fromUid) {
     const myRef = window.doc(db, 'users', window.currentUser.uid);
     const friendRef = window.doc(db, 'users', fromUid);
     
-    // Добавляем друг другу в друзья
-    const myFriendData = { uid: fromUid, name: request.name, addedAt: Date.now() };
-    const theirFriendData = { uid: window.currentUser.uid, name: window.currentUser.displayName, addedAt: Date.now() };
+    // Обновляю себя
+    const myNewFriends = [...window.friends, { uid: fromUid, name: request.name, addedAt: Date.now() }];
+    const myNewIncoming = window.incomingRequests.filter(r => r.uid !== fromUid);
+    await window.updateDoc(myRef, { friends: myNewFriends, incomingRequests: myNewIncoming });
     
-    // Удаляем из заявок
-    const newIncoming = window.incomingRequests.filter(r => r.uid !== fromUid);
-    const newOutgoing = window.outgoingRequests.filter(r => r.uid !== fromUid);
-    
-    await window.updateDoc(myRef, {
-        friends: window.arrayUnion(myFriendData),
-        incomingRequests: newIncoming
-    });
-    
-    // Обновляем друга
+    // Обновляю друга
     const friendSnap = await window.getDoc(friendRef);
     if (friendSnap.exists()) {
         const fData = friendSnap.data();
-        const fOutgoing = (fData.outgoingRequests || []).filter(r => r.uid !== window.currentUser.uid);
-        const fFriends = fData.friends || [];
-        
-        await window.updateDoc(friendRef, {
-            friends: [...fFriends, theirFriendData],
-            outgoingRequests: fOutgoing
-        });
+        const fNewFriends = [...(fData.friends || []), { uid: window.currentUser.uid, name: window.currentUser.displayName, addedAt: Date.now() }];
+        const fNewOutgoing = (fData.outgoingRequests || []).filter(r => r.uid !== window.currentUser.uid);
+        await window.updateDoc(friendRef, { friends: fNewFriends, outgoingRequests: fNewOutgoing });
     }
     
-    await window.loadFriends();
+    await refreshLocalData();
     alert(`✅ ${request.name} теперь ваш друг!`);
 }
 
-// ========== ОТКЛОНИТЬ ЗАЯВКУ ==========
+// ========== ОТКЛОНИТЬ ==========
 async function rejectRequest(fromUid) {
     const myRef = window.doc(db, 'users', window.currentUser.uid);
     const friendRef = window.doc(db, 'users', fromUid);
     
-    const newIncoming = window.incomingRequests.filter(r => r.uid !== fromUid);
-    await window.updateDoc(myRef, { incomingRequests: newIncoming });
+    const myNewIncoming = window.incomingRequests.filter(r => r.uid !== fromUid);
+    await window.updateDoc(myRef, { incomingRequests: myNewIncoming });
     
     const fSnap = await window.getDoc(friendRef);
     if (fSnap.exists()) {
@@ -305,16 +300,16 @@ async function rejectRequest(fromUid) {
         });
     }
     
-    await window.loadFriends();
+    await refreshLocalData();
 }
 
-// ========== ОТМЕНИТЬ ЗАЯВКУ ==========
+// ========== ОТМЕНИТЬ ==========
 async function cancelRequest(toUid) {
     const myRef = window.doc(db, 'users', window.currentUser.uid);
     const friendRef = window.doc(db, 'users', toUid);
     
-    const newOutgoing = window.outgoingRequests.filter(r => r.uid !== toUid);
-    await window.updateDoc(myRef, { outgoingRequests: newOutgoing });
+    const myNewOutgoing = window.outgoingRequests.filter(r => r.uid !== toUid);
+    await window.updateDoc(myRef, { outgoingRequests: myNewOutgoing });
     
     const fSnap = await window.getDoc(friendRef);
     if (fSnap.exists()) {
@@ -324,7 +319,7 @@ async function cancelRequest(toUid) {
         });
     }
     
-    await window.loadFriends();
+    await refreshLocalData();
 }
 
 // ========== УДАЛИТЬ ДРУГА ==========
@@ -332,7 +327,7 @@ async function removeFriend(friendUid) {
     const friend = window.friends.find(f => f.uid === friendUid);
     const name = friend?.name || 'друга';
     
-    if (!confirm(`Удалить ${name} из друзей? Совместный список станет недоступен.`)) return;
+    if (!confirm(`Удалить ${name} из друзей?`)) return;
     
     const myRef = window.doc(db, 'users', window.currentUser.uid);
     const friendRef = window.doc(db, 'users', friendUid);
@@ -353,11 +348,28 @@ async function removeFriend(friendUid) {
         window.currentList = 'my';
     }
     
-    await window.loadFriends();
+    await refreshLocalData();
     if (window.loadPlaces) window.loadPlaces();
 }
 
-// ========== СЛУШАТЕЛЬ ИЗМЕНЕНИЙ ==========
+// ========== ОБНОВЛЕНИЕ ЛОКАЛЬНЫХ ДАННЫХ ==========
+async function refreshLocalData() {
+    const userRef = window.doc(db, 'users', window.currentUser.uid);
+    const userSnap = await window.getDoc(userRef);
+    
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+        window.friends = data.friends || [];
+        window.incomingRequests = data.incomingRequests || [];
+        window.outgoingRequests = data.outgoingRequests || [];
+    }
+    
+    renderFriendsModal();
+    renderListChips();
+    updateFriendsBadge();
+}
+
+// ========== СЛУШАТЕЛЬ ==========
 window.listenFriends = function () {
     if (!window.currentUser) return;
     
@@ -376,19 +388,34 @@ window.listenFriends = function () {
     });
 };
 
-// ========== КНОПКИ ==========
-document.getElementById('addFriendBtn')?.addEventListener('click', () => {
-    const input = document.getElementById('friendIdInput');
-    if (input) sendRequest(input.value.trim());
+// ========== КНОПКИ (убираем старые обработчики) ==========
+document.addEventListener('DOMContentLoaded', () => {
+    const addBtn = document.getElementById('addFriendBtn');
+    const copyBtn = document.getElementById('copyIdBtn');
+    
+    // Удаляем старые обработчики клонированием
+    if (addBtn) {
+        const newBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newBtn, addBtn);
+        newBtn.addEventListener('click', () => {
+            const input = document.getElementById('friendIdInput');
+            if (input) sendRequest(input.value.trim());
+        });
+    }
+    
+    if (copyBtn) {
+        const newBtn = copyBtn.cloneNode(true);
+        copyBtn.parentNode.replaceChild(newBtn, copyBtn);
+        newBtn.addEventListener('click', () => {
+            if (!window.currentUser) return;
+            navigator.clipboard.writeText(window.currentUser.uid);
+            const icon = newBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'bi bi-check-lg';
+                setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 1500);
+            }
+        });
+    }
 });
 
-document.getElementById('copyIdBtn')?.addEventListener('click', () => {
-    if (!window.currentUser) return;
-    navigator.clipboard.writeText(window.currentUser.uid);
-    const btn = document.getElementById('copyIdBtn');
-    const icon = btn.querySelector('i');
-    icon.className = 'bi bi-check-lg';
-    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 1500);
-});
-
-console.log('✅ friends.js v2 загружен (заявки, подтверждение, удаление)');
+console.log('✅ friends.js v3 загружен');
