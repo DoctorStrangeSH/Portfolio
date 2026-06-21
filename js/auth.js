@@ -2,11 +2,10 @@
 const auth = window.auth;
 const db = window.db;
 
-// Сразу показываем загрузку
 document.getElementById('loginScreen').classList.remove('d-none');
 document.getElementById('appScreen').classList.add('d-none');
+document.getElementById('loadingScreen').classList.add('d-none');
 
-// Кнопка входа
 document.getElementById('loginBtn').addEventListener('click', async () => {
     try {
         const provider = new window.GoogleAuthProvider();
@@ -17,35 +16,27 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     }
 });
 
-// Кнопка выхода
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    window.signOut(auth);
-});
+document.getElementById('logoutBtn').addEventListener('click', () => window.signOut(auth));
 
-// Отслеживание авторизации
 let authResolved = false;
 
 window.onAuthStateChanged(auth, async (user) => {
     const loginScreen = document.getElementById('loginScreen');
     const appScreen = document.getElementById('appScreen');
+    const loadingScreen = document.getElementById('loadingScreen');
     
     if (user) {
-        // Сохраняем пользователя
         window.currentUser = user;
-        
-        // Переключаем экраны
         loginScreen.classList.add('d-none');
-        appScreen.classList.remove('d-none');
         
-        // Имя пользователя
-        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
-        
-        const myUserIdEl = document.getElementById('myUserId');
-        if (myUserIdEl) {
-            myUserIdEl.textContent = user.uid;
+        if (!authResolved) {
+            loadingScreen.classList.remove('d-none');
         }
         
-        // Создаём профиль в Firestore, если нет
+        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
+        const myUserIdEl = document.getElementById('myUserId');
+        if (myUserIdEl) myUserIdEl.textContent = user.uid;
+        
         try {
             const userRef = window.doc(db, 'users', user.uid);
             const userSnap = await window.getDoc(userRef);
@@ -57,24 +48,22 @@ window.onAuthStateChanged(auth, async (user) => {
                     friends: [],
                     createdAt: Date.now()
                 });
-                console.log('✅ Профиль создан');
             }
         } catch (error) {
-            console.error('Ошибка создания профиля:', error);
+            console.error('Ошибка профиля:', error);
         }
         
-        // Запускаем приложение только один раз
         if (!authResolved) {
             authResolved = true;
-            if (window.initApp) {
-                await window.initApp();
-            }
+            if (window.initApp) await window.initApp();
+            loadingScreen.classList.add('d-none');
+            appScreen.classList.remove('d-none');
         }
     } else {
-        // Пользователь вышел
         window.currentUser = null;
         authResolved = false;
         loginScreen.classList.remove('d-none');
         appScreen.classList.add('d-none');
+        loadingScreen.classList.add('d-none');
     }
 });
