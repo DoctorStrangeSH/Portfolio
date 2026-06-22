@@ -1,5 +1,4 @@
 // ==================== travelList.js ====================
-// Главный модуль раздела путешествий
 
 window.travelState = {
     places: [],
@@ -106,10 +105,7 @@ function renderTravelCards(containerId, arr, emptyId) {
     const e = document.getElementById(emptyId);
     if (!c || !e) return;
     c.innerHTML = '';
-    if (arr.length === 0) {
-        e.classList.remove('d-none');
-        return;
-    }
+    if (arr.length === 0) { e.classList.remove('d-none'); return; }
     e.classList.add('d-none');
     arr.forEach((place, i) => {
         if (window.createTravelCard) {
@@ -126,37 +122,25 @@ window.renderTravelSection = function(container) {
         <div class="d-flex gap-2 flex-wrap align-items-center mb-3 overflow-auto pb-1" id="travelListChips"></div>
         <div class="row g-2 mb-3">
             <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="travelSearch" placeholder="Поиск...">
-                </div>
+                <div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="travelSearch" placeholder="Поиск..."></div>
             </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 flex-wrap" id="travelFilters"></div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-success btn-sm" id="travelAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить место</button>
             </div>
         </div>
+        <div id="travelFilters" class="mb-2"></div>
         <div id="travelBudget" class="budget-summary d-none mb-3"></div>
         <ul class="nav nav-tabs mb-3" id="travelTabs">
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelWishlistTab">🌍 Хочу <span class="badge bg-secondary ms-1" id="travelWishCount">0</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelVisitedTab">✅ Посетил <span class="badge bg-secondary ms-1" id="travelVisCount">0</span></button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelAddTab">➕ Добавить</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelMapTab">🗺️ Карта</button></li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane fade" id="travelWishlistTab">
-                <div class="row g-3" id="travelWishlist"></div>
-                <div id="travelWishEmpty" class="text-center py-5 d-none"><i class="bi bi-map text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет мест</p></div>
-            </div>
-            <div class="tab-pane fade" id="travelVisitedTab">
-                <div class="row g-3" id="travelVisited"></div>
-                <div id="travelVisEmpty" class="text-center py-5 d-none"><p class="text-muted">Вы пока нигде не были</p></div>
-            </div>
-            <div class="tab-pane fade" id="travelAddTab"><div id="travelFormContainer"></div></div>
+            <div class="tab-pane fade" id="travelWishlistTab"><div class="row g-3" id="travelWishlist"></div><div id="travelWishEmpty" class="text-center py-5 d-none"><i class="bi bi-map text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет мест</p></div></div>
+            <div class="tab-pane fade" id="travelVisitedTab"><div class="row g-3" id="travelVisited"></div><div id="travelVisEmpty" class="text-center py-5 d-none"><p class="text-muted">Вы пока нигде не были</p></div></div>
             <div class="tab-pane fade" id="travelMapTab"><div id="travelMapContainer" style="height:70vh;border-radius:12px"></div></div>
-        </div>
-    `;
+        </div>`;
     
-    if (window.renderTravelForm) window.renderTravelForm();
     if (window.initTravelMap) window.initTravelMap();
     
     document.getElementById('travelSearch').addEventListener('input', function() {
@@ -167,16 +151,18 @@ window.renderTravelSection = function(container) {
     document.querySelectorAll('#travelTabs button[data-bs-toggle="tab"]').forEach(btn => {
         btn.addEventListener('shown.bs.tab', function(e) {
             const target = e.target.dataset.bsTarget;
-            if (target) {
-                localStorage.setItem('travelActiveTab', target.replace('#', ''));
-            }
+            if (target) localStorage.setItem('travelActiveTab', target.replace('#', ''));
         });
     });
     
+    document.getElementById('travelAddBtn').addEventListener('click', () => {
+        if (window.showTravelAddModal) window.showTravelAddModal();
+    });
+    
     setTimeout(() => {
-        const savedTab = localStorage.getItem('travelActiveTab') || 'travelWishlistTab';
-        const tabBtn = document.querySelector(`#travelTabs button[data-bs-target="#${savedTab}"]`);
-        if (tabBtn) new bootstrap.Tab(tabBtn).show();
+        const saved = localStorage.getItem('travelActiveTab') || 'travelWishlistTab';
+        const tab = document.querySelector(`#travelTabs button[data-bs-target="#${saved}"]`);
+        if (tab) new bootstrap.Tab(tab).show();
     }, 400);
     
     if (window.renderListChips) window.renderListChips();
