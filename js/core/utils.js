@@ -51,4 +51,15 @@ window.RESTAURANT_STATUSES = {
     dislike: '👎 Не понравилось'
 };
 
+// API Кинопоиска
+window.KINOPOISK_API_KEY = XYBPJHC-NRHM8YM-HWBCEKH-WPRYVXQ
+
+// Статусы фильмов
+window.MOVIE_STATUSES = {
+    want: '🔖 Хочу посмотреть',
+    watched: '✅ Посмотрел',
+    favourite: '⭐ Любимое',
+    dislike: '👎 Не понравилось'
+};
+
 console.log('✅ utils.js загружен');

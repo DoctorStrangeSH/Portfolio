@@ -65,6 +65,9 @@ function loadCurrentSection() {
                 container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки ресторанов</p>';
             }
             break;
+            case 'movies':
+    if (window.renderMoviesSection) window.renderMoviesSection(container);
+    break;
         default:
             container.innerHTML = '<p class="text-center text-muted py-5">Скоро...</p>';
     }
