@@ -36,11 +36,7 @@ function getFilteredFoodPlaces() {
     }
     if (window.foodState.searchQuery) {
         const q = window.foodState.searchQuery.toLowerCase();
-        arr = arr.filter(p => 
-            p.name.toLowerCase().includes(q) || 
-            (window.CUISINE_TYPES[p.cuisine] || '').toLowerCase().includes(q) ||
-            (p.description || '').toLowerCase().includes(q)
-        );
+        arr = arr.filter(p => p.name.toLowerCase().includes(q) || (window.CUISINE_TYPES[p.cuisine] || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
     }
     return arr;
 }
@@ -55,24 +51,19 @@ function renderFoodContent() {
 function renderFoodFilters() {
     const c = document.getElementById('foodFilters');
     if (!c) return;
-    
     let h = '<div class="d-flex gap-2 flex-wrap mb-2">';
     h += `<span class="category-chip ${window.foodState.currentFilter === 'all' ? 'active' : ''}" data-filter="all">Все</span>`;
     h += `<span class="category-chip ${window.foodState.currentFilter === 'want' ? 'active' : ''}" data-filter="want">🔖 Хочу</span>`;
     h += `<span class="category-chip ${window.foodState.currentFilter === 'visited' ? 'active' : ''}" data-filter="visited">✅ Посетил</span>`;
     h += `<span class="category-chip ${window.foodState.currentFilter === 'favourite' ? 'active' : ''}" data-filter="favourite">⭐ Любимые</span>`;
     h += `<span class="category-chip ${window.foodState.currentFilter === 'dislike' ? 'active' : ''}" data-filter="dislike">👎 Не понравилось</span>`;
-    h += '</div>';
-    
-    h += '<div class="d-flex gap-2">';
+    h += '</div><div class="d-flex gap-2">';
     h += `<span class="category-chip ${window.foodState.priceFilter === 'all' ? 'active' : ''}" data-price="all">💰 Все</span>`;
     h += `<span class="category-chip ${window.foodState.priceFilter === '1' ? 'active' : ''}" data-price="1">₽</span>`;
     h += `<span class="category-chip ${window.foodState.priceFilter === '2' ? 'active' : ''}" data-price="2">₽₽</span>`;
     h += `<span class="category-chip ${window.foodState.priceFilter === '3' ? 'active' : ''}" data-price="3">₽₽₽</span>`;
     h += '</div>';
-    
     c.innerHTML = h;
-    
     c.querySelectorAll('[data-filter]').forEach(ch => {
         ch.addEventListener('click', () => {
             window.foodState.currentFilter = ch.dataset.filter;
@@ -80,7 +71,6 @@ function renderFoodFilters() {
             renderFoodContent();
         });
     });
-    
     c.querySelectorAll('[data-price]').forEach(ch => {
         ch.addEventListener('click', () => {
             window.foodState.priceFilter = ch.dataset.price;
@@ -92,15 +82,10 @@ function renderFoodFilters() {
 
 function updateFoodCounters() {
     const all = window.foodState.places;
-    const allCount = document.getElementById('foodAllCount');
-    const wantCount = document.getElementById('foodWantCount');
-    const visCount = document.getElementById('foodVisitedCount');
-    const favCount = document.getElementById('foodFavCount');
-    
-    if (allCount) allCount.textContent = all.length;
-    if (wantCount) wantCount.textContent = all.filter(p => p.status === 'want').length;
-    if (visCount) visCount.textContent = all.filter(p => p.status === 'visited' || p.status === 'favourite' || p.status === 'dislike').length;
-    if (favCount) favCount.textContent = all.filter(p => p.status === 'favourite').length;
+    document.getElementById('foodAllCount').textContent = all.length;
+    document.getElementById('foodWantCount').textContent = all.filter(p => p.status === 'want').length;
+    document.getElementById('foodVisitedCount').textContent = all.filter(p => p.status === 'visited' || p.status === 'favourite' || p.status === 'dislike').length;
+    document.getElementById('foodFavCount').textContent = all.filter(p => p.status === 'favourite').length;
 }
 
 function renderFoodCards(containerId, arr, emptyId) {
@@ -108,17 +93,9 @@ function renderFoodCards(containerId, arr, emptyId) {
     const e = document.getElementById(emptyId);
     if (!c || !e) return;
     c.innerHTML = '';
-    if (arr.length === 0) {
-        e.classList.remove('d-none');
-        return;
-    }
+    if (arr.length === 0) { e.classList.remove('d-none'); return; }
     e.classList.add('d-none');
-    arr.forEach((place, i) => {
-        if (window.createFoodCard) {
-            const card = window.createFoodCard(place, i);
-            if (card) c.appendChild(card);
-        }
-    });
+    arr.forEach((place, i) => { if (window.createFoodCard) { const card = window.createFoodCard(place, i); if (card) c.appendChild(card); } });
     if (window.attachFoodHandlers) window.attachFoodHandlers();
 }
 
@@ -126,51 +103,20 @@ function renderFoodCards(containerId, arr, emptyId) {
 window.renderFoodSection = function(container) {
     container.innerHTML = `
         <div class="d-flex gap-2 flex-wrap align-items-center mb-3 overflow-auto pb-1" id="foodListChips"></div>
-        <div class="row g-2 mb-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="foodSearch" placeholder="Поиск по названию или кухне...">
-                </div>
-            </div>
-            <div class="col-md-6 text-end">
-                <button class="btn btn-success btn-sm" id="foodAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить ресторан</button>
-            </div>
-        </div>
+        <div class="row g-2 mb-3"><div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="foodSearch" placeholder="Поиск..."></div></div><div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="foodAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить ресторан</button></div></div>
         <div id="foodFilters" class="mb-3"></div>
-        <div class="row g-2 mb-3">
-            <div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="foodAllCount">0</strong></div></div>
-            <div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="foodWantCount">0</strong></div></div>
-            <div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посетил</small><strong id="foodVisitedCount">0</strong></div></div>
-            <div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="foodFavCount">0</strong></div></div>
-        </div>
+        <div class="row g-2 mb-3"><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="foodAllCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="foodWantCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посетил</small><strong id="foodVisitedCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="foodFavCount">0</strong></div></div></div>
         <div class="row g-3" id="foodContainer"></div>
-        <div id="foodEmpty" class="text-center py-5 d-none">
-            <i class="bi bi-cup-hot text-muted" style="font-size:4rem"></i>
-            <p class="text-muted mt-2">Пока нет ресторанов</p>
-        </div>
-        <div id="foodFormWrapper" class="d-none mt-3"></div>
-    `;
+        <div id="foodEmpty" class="text-center py-5 d-none"><i class="bi bi-cup-hot text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет ресторанов</p></div>
+        <div id="foodFormWrapper" class="d-none mt-3"></div>`;
     
-    // Кнопка добавления
     document.getElementById('foodAddBtn').addEventListener('click', () => {
         const wrapper = document.getElementById('foodFormWrapper');
         wrapper.classList.toggle('d-none');
-        if (!wrapper.classList.contains('d-none') && window.renderFoodForm) {
-            window.renderFoodForm();
-        }
+        if (!wrapper.classList.contains('d-none') && window.renderFoodForm) window.renderFoodForm();
     });
-    
-    // Поиск
-    document.getElementById('foodSearch').addEventListener('input', function() {
-        window.foodState.searchQuery = this.value;
-        renderFoodContent();
-    });
-    
-    // Фишки списков
+    document.getElementById('foodSearch').addEventListener('input', function() { window.foodState.searchQuery = this.value; renderFoodContent(); });
     if (window.renderListChips) window.renderListChips();
-    
-    // Загружаем
     loadFoodPlaces();
 };
 

@@ -137,13 +137,13 @@ window.renderTravelSection = function(container) {
         </div>
         <div id="travelBudget" class="budget-summary d-none mb-3"></div>
         <ul class="nav nav-tabs mb-3" id="travelTabs">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#travelWishlistTab">🌍 Хочу <span class="badge bg-secondary ms-1" id="travelWishCount">0</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelWishlistTab">🌍 Хочу <span class="badge bg-secondary ms-1" id="travelWishCount">0</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelVisitedTab">✅ Посетил <span class="badge bg-secondary ms-1" id="travelVisCount">0</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelAddTab">➕ Добавить</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelMapTab">🗺️ Карта</button></li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="travelWishlistTab">
+            <div class="tab-pane fade" id="travelWishlistTab">
                 <div class="row g-3" id="travelWishlist"></div>
                 <div id="travelWishEmpty" class="text-center py-5 d-none"><i class="bi bi-map text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет мест</p></div>
             </div>
@@ -156,17 +156,14 @@ window.renderTravelSection = function(container) {
         </div>
     `;
     
-    // Загружаем форму и карту
     if (window.renderTravelForm) window.renderTravelForm();
     if (window.initTravelMap) window.initTravelMap();
     
-    // Поиск
     document.getElementById('travelSearch').addEventListener('input', function() {
         window.travelState.searchQuery = this.value;
         renderTravelContent();
     });
     
-    // Сохраняем подвкладку при переключении
     document.querySelectorAll('#travelTabs button[data-bs-toggle="tab"]').forEach(btn => {
         btn.addEventListener('shown.bs.tab', function(e) {
             const target = e.target.dataset.bsTarget;
@@ -176,19 +173,13 @@ window.renderTravelSection = function(container) {
         });
     });
     
-    // Восстанавливаем сохранённую подвкладку
     setTimeout(() => {
         const savedTab = localStorage.getItem('travelActiveTab') || 'travelWishlistTab';
         const tabBtn = document.querySelector(`#travelTabs button[data-bs-target="#${savedTab}"]`);
-        if (tabBtn) {
-            new bootstrap.Tab(tabBtn).show();
-        }
+        if (tabBtn) new bootstrap.Tab(tabBtn).show();
     }, 400);
     
-    // Фишки списков
     if (window.renderListChips) window.renderListChips();
-    
-    // Загружаем места
     loadTravelPlaces();
 };
 
