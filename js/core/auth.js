@@ -218,10 +218,19 @@ window.onAuthStateChanged(auth, async (user) => {
             console.error('Ошибка профиля:', e);
         }
         
+// Запускаем приложение с задержкой для гарантии загрузки модулей
         if (!authResolved) {
             authResolved = true;
-            if (window.initApp) await window.initApp();
-        }
+            // Даём время на загрузку всех модулей
+            setTimeout(async () => {
+                if (window.initApp) {
+                    await window.initApp();
+                    // Скрываем загрузку только после инициализации
+                    loadingScreen.classList.add('d-none');
+                    appScreen.classList.remove('d-none');
+                }
+            }, 500);
+        } 
         
         loadingScreen.classList.add('d-none');
         appScreen.classList.remove('d-none');

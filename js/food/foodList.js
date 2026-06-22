@@ -2,9 +2,9 @@
 
 window.foodState = {
     places: [],
-    currentFilter: 'all',
+    currentFilter: localStorage.getItem('foodFilter') || 'all',
     searchQuery: '',
-    priceFilter: 'all'
+    priceFilter: localStorage.getItem('foodPriceFilter') || 'all'
 };
 
 function getFoodCollection() {
@@ -76,6 +76,7 @@ function renderFoodFilters() {
     c.querySelectorAll('[data-filter]').forEach(ch => {
         ch.addEventListener('click', () => {
             window.foodState.currentFilter = ch.dataset.filter;
+            localStorage.setItem('foodFilter', window.foodState.currentFilter);
             renderFoodContent();
         });
     });
@@ -83,6 +84,7 @@ function renderFoodFilters() {
     c.querySelectorAll('[data-price]').forEach(ch => {
         ch.addEventListener('click', () => {
             window.foodState.priceFilter = ch.dataset.price;
+            localStorage.setItem('foodPriceFilter', window.foodState.priceFilter);
             renderFoodContent();
         });
     });
@@ -165,7 +167,7 @@ window.renderFoodSection = function(container) {
         renderFoodContent();
     });
     
-    // Фишки
+    // Фишки списков
     if (window.renderListChips) window.renderListChips();
     
     // Загружаем

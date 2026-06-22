@@ -1,10 +1,9 @@
 // ==================== app.js ====================
 
-// Восстанавливаем сохранённый раздел
 window.currentSection = localStorage.getItem('currentSection') || 'travel';
+window.currentSubTab = localStorage.getItem('currentSubTab') || 'wishlist';
 
 window.initApp = async function() {
-    // Загружаем модули разделов
     await import('./travel/travelCards.js');
     await import('./travel/travelMap.js');
     await import('./travel/travelForm.js');
@@ -14,11 +13,9 @@ window.initApp = async function() {
     await import('./food/foodForm.js');
     await import('./food/foodList.js');
     
-    // Загружаем друзей
     if (window.loadFriends) await window.loadFriends();
     if (window.listenFriends) window.listenFriends();
     
-    // Меню разделов
     document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
         btn.addEventListener('click', () => {
             if (btn.classList.contains('disabled')) return;
@@ -32,19 +29,24 @@ window.initApp = async function() {
         });
     });
     
-    // Активируем нужную кнопку меню
     document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
-        if (btn.dataset.section === window.currentSection) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        btn.classList.toggle('active', btn.dataset.section === window.currentSection);
+    });
+    
+    loadCurrentSection();
+    
+    // Слушаем переключение подвкладок
+    document.addEventListener('click', (e) => {
+        const tabBtn = e.target.closest('button[data-bs-toggle="tab"]');
+        if (tabBtn) {
+            const target = tabBtn.dataset.bsTarget;
+            if (target) {
+                localStorage.setItem('currentSubTab', target.replace('#', ''));
+            }
         }
     });
     
-    // Загружаем сохранённый раздел
-    loadCurrentSection();
-    
-    console.log('✅ Все модули загружены (текущий раздел: ' + window.currentSection + ')');
+    console.log('✅ Все модули загружены (раздел: ' + window.currentSection + ')');
 };
 
 function loadCurrentSection() {
@@ -55,19 +57,49 @@ function loadCurrentSection() {
         case 'travel':
             if (window.renderTravelSection) {
                 window.renderTravelSection(container);
-            } else {
-                container.innerHTML = '<p class="text-danger">Ошибка: travel модуль не загружен</p>';
+                // Восстанавливаем подвкладку
+                setTimeout(() => {
+                    restoreSubTab('travel');
+                }, 600);
             }
             break;
         case 'food':
             if (window.renderFoodSection) {
                 window.renderFoodSection(container);
-            } else {
-                container.innerHTML = '<p class="text-danger">Ошибка: food модуль не загружен</p>';
+                setTimeout(() => {
+                    restoreSubTab('food');
+                }, 600);
             }
             break;
         default:
             container.innerHTML = '<p class="text-center text-muted py-5">Скоро...</p>';
+    }
+}
+
+function restoreSubTab(section) {
+    const savedTab = localStorage.getItem('currentSubTab');
+    if (!savedTab) return;
+    
+    // Для travel
+    if (section === 'travel') {
+        const tabMap = {
+            'wishlist': '#travelWishlistTab',
+            'visited': '#travelVisitedTab',
+            'add': '#travelAddTab',
+            'map': '#travelMapTab'
+        };
+        const selector = tabMap[savedTab] || tabMap['wishlist'];
+        const tabBtn = document.querySelector(`#travelTabs button[data-bs-target="${selector}"]`);
+        if (tabBtn) new bootstrap.Tab(tabBtn).show();
+    }
+    
+    // Для food
+    if (section === 'food') {
+        // Сохраняем фильтр статуса как подвкладку
+        if (['want', 'visited', 'favourite', 'dislike'].includes(savedTab)) {
+            window.foodState.currentFilter = savedTab;
+            if (window.renderFoodContent) window.renderFoodContent();
+        }
     }
 }
 
