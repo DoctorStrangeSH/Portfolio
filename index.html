@@ -24,10 +24,12 @@
     <p class="text-muted mb-4">Путешествия, рестораны, фильмы — всё в одном</p>
     
     <!-- Форма входа по почте -->
-    <div class="card shadow-sm mb-3" style="max-width:350px;width:100%">
+    <div class="card shadow-sm mb-3" style="max-width:360px;width:100%">
         <div class="card-body p-4">
-            <h6 class="mb-3 text-center">Войти по почте</h6>
+            
+            <!-- Вход -->
             <form id="emailLoginForm" autocomplete="on">
+                <h6 class="mb-3 text-center">Войти</h6>
                 <div class="mb-2">
                     <input type="email" class="form-control" id="emailInput" placeholder="Email" required>
                 </div>
@@ -45,7 +47,7 @@
             <form id="registerForm" class="d-none" autocomplete="on">
                 <h6 class="mb-3 text-center">Регистрация</h6>
                 <div class="mb-2">
-                    <input type="text" class="form-control" id="regName" placeholder="Имя" required>
+                    <input type="text" class="form-control" id="regName" placeholder="Ваше имя" required>
                 </div>
                 <div class="mb-2">
                     <input type="email" class="form-control" id="regEmail" placeholder="Email" required>
@@ -60,34 +62,28 @@
             <!-- Сброс пароля (скрыта) -->
             <form id="resetForm" class="d-none">
                 <h6 class="mb-3 text-center">Сброс пароля</h6>
-                <p class="small text-muted">Отправим ссылку на вашу почту</p>
+                <p class="small text-muted">Отправим ссылку для сброса на вашу почту</p>
                 <div class="mb-3">
                     <input type="email" class="form-control" id="resetEmail" placeholder="Email" required>
                 </div>
-                <button type="submit" class="btn btn-warning w-100 mb-2">Отправить</button>
+                <button type="submit" class="btn btn-warning w-100 mb-2">Отправить ссылку</button>
                 <a href="#" id="showLoginFromReset" class="small">Вернуться ко входу</a>
             </form>
         </div>
     </div>
     
     <!-- Разделитель -->
-    <div class="d-flex align-items-center gap-3 mb-3" style="max-width:350px;width:100%">
+    <div class="d-flex align-items-center gap-3 mb-3" style="max-width:360px;width:100%">
         <hr class="flex-grow-1">
         <span class="text-muted small">или</span>
         <hr class="flex-grow-1">
     </div>
     
-    <!-- Социальные кнопки -->
-    <div class="d-flex gap-3" style="max-width:350px;width:100%">
-        <button id="loginGoogleBtn" class="btn btn-light border shadow-sm py-3 flex-grow-1 d-flex align-items-center justify-content-center">
-            <img src="https://www.google.com/favicon.ico" width="20" class="me-2">
-            <span>Google</span>
-        </button>
-        <button id="loginYandexBtn" class="btn shadow-sm py-3 flex-grow-1 d-flex align-items-center justify-content-center" style="background:#fc3f1d;color:white;border:none">
-            <span style="font-weight:bold;font-size:1.1rem">Я</span>
-            <span class="ms-2">Яндекс</span>
-        </button>
-    </div>
+    <!-- Google -->
+    <button id="loginGoogleBtn" class="btn btn-light border shadow-sm py-3 d-flex align-items-center justify-content-center" style="max-width:360px;width:100%">
+        <img src="https://www.google.com/favicon.ico" width="20" class="me-2">
+        <span>Войти через Google</span>
+    </button>
     
     <p class="text-muted small mt-3">Ваши данные принадлежат только вам</p>
 </div>
