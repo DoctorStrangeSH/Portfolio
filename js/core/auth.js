@@ -1,62 +1,176 @@
-// ==================== auth.js ====================
+// ==================== auth.js (Email + Google + Yandex) ====================
 const auth = window.auth;
 const db = window.db;
 
-// Сначала показываем загрузку, а не вход
-document.getElementById('loginScreen').classList.add('d-none');
-document.getElementById('appScreen').classList.add('d-none');
-document.getElementById('loadingScreen').classList.remove('d-none');
+// Провайдеры
+const googleProvider = new window.GoogleAuthProvider();
+const yandexProvider = new window.OAuthProvider('yandex.com');
+yandexProvider.addScope('login:email');
+yandexProvider.addScope('login:info');
 
-// Проверяем localStorage — был ли вход раньше
+// Функции Firebase Auth для email/password
+const { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+// Экраны
+const loginScreen = document.getElementById('loginScreen');
+const appScreen = document.getElementById('appScreen');
+const loadingScreen = document.getElementById('loadingScreen');
+
+// Инициализация
+loadingScreen.classList.remove('d-none');
+loginScreen.classList.add('d-none');
+appScreen.classList.add('d-none');
+
 const wasLoggedIn = localStorage.getItem('wasLoggedIn') === 'true';
 if (!wasLoggedIn) {
-    // Первый заход — показываем вход
-    document.getElementById('loadingScreen').classList.add('d-none');
-    document.getElementById('loginScreen').classList.remove('d-none');
+    loadingScreen.classList.add('d-none');
+    loginScreen.classList.remove('d-none');
 }
 
-// Кнопка входа
-document.getElementById('loginBtn').addEventListener('click', async () => {
+// ========== EMAIL/PASSWORD ==========
+
+// Переключение форм
+document.getElementById('showRegister')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('emailLoginForm').classList.add('d-none');
+    document.getElementById('registerForm').classList.remove('d-none');
+    document.getElementById('resetForm').classList.add('d-none');
+});
+
+document.getElementById('showLogin')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('registerForm').classList.add('d-none');
+    document.getElementById('emailLoginForm').classList.remove('d-none');
+});
+
+document.getElementById('showReset')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('emailLoginForm').classList.add('d-none');
+    document.getElementById('resetForm').classList.remove('d-none');
+});
+
+document.getElementById('showLoginFromReset')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('resetForm').classList.add('d-none');
+    document.getElementById('emailLoginForm').classList.remove('d-none');
+});
+
+// Вход по почте
+document.getElementById('emailLoginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    
     try {
-        document.getElementById('loginScreen').classList.add('d-none');
-        document.getElementById('loadingScreen').classList.remove('d-none');
-        const provider = new window.GoogleAuthProvider();
-        await window.signInWithPopup(auth, provider);
+        loadingScreen.classList.remove('d-none');
+        loginScreen.classList.add('d-none');
+        await signInWithEmailAndPassword(auth, email, password);
         localStorage.setItem('wasLoggedIn', 'true');
     } catch (error) {
-        console.error('Ошибка входа:', error);
-        document.getElementById('loadingScreen').classList.add('d-none');
-        document.getElementById('loginScreen').classList.remove('d-none');
-        alert('Не удалось войти. Проверьте соединение.');
+        loadingScreen.classList.add('d-none');
+        loginScreen.classList.remove('d-none');
+        
+        if (error.code === 'auth/user-not-found') {
+            alert('Пользователь не найден. Зарегистрируйтесь.');
+            document.getElementById('emailLoginForm').classList.add('d-none');
+            document.getElementById('registerForm').classList.remove('d-none');
+        } else if (error.code === 'auth/wrong-password') {
+            alert('Неверный пароль');
+        } else {
+            alert('Ошибка: ' + error.message);
+        }
     }
 });
 
-// Кнопка выхода
-document.getElementById('logoutBtn').addEventListener('click', () => {
+// Регистрация
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    
+    try {
+        loadingScreen.classList.remove('d-none');
+        loginScreen.classList.add('d-none');
+        
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(result.user, { displayName: name });
+        
+        localStorage.setItem('wasLoggedIn', 'true');
+    } catch (error) {
+        loadingScreen.classList.add('d-none');
+        loginScreen.classList.remove('d-none');
+        
+        if (error.code === 'auth/email-already-in-use') {
+            alert('Этот email уже зарегистрирован. Войдите.');
+            document.getElementById('registerForm').classList.add('d-none');
+            document.getElementById('emailLoginForm').classList.remove('d-none');
+        } else if (error.code === 'auth/weak-password') {
+            alert('Пароль слишком слабый. Минимум 6 символов.');
+        } else {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+});
+
+// Сброс пароля
+document.getElementById('resetForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('resetEmail').value.trim();
+    
+    try {
+        await sendPasswordResetEmail(auth, email);
+        alert('✅ Ссылка для сброса пароля отправлена на ' + email);
+        document.getElementById('resetForm').classList.add('d-none');
+        document.getElementById('emailLoginForm').classList.remove('d-none');
+    } catch (error) {
+        alert('Ошибка: ' + error.message);
+    }
+});
+
+// ========== GOOGLE / YANDEX ==========
+
+document.getElementById('loginGoogleBtn')?.addEventListener('click', () => socialLogin(googleProvider, 'Google'));
+document.getElementById('loginYandexBtn')?.addEventListener('click', () => socialLogin(yandexProvider, 'Яндекс'));
+document.getElementById('loginBtn')?.addEventListener('click', () => socialLogin(googleProvider, 'Google'));
+
+async function socialLogin(provider, name) {
+    try {
+        loadingScreen.classList.remove('d-none');
+        loginScreen.classList.add('d-none');
+        await window.signInWithPopup(auth, provider);
+        localStorage.setItem('wasLoggedIn', 'true');
+    } catch (error) {
+        loadingScreen.classList.add('d-none');
+        loginScreen.classList.remove('d-none');
+        if (error.code === 'auth/popup-closed-by-user') return;
+        alert(`Не удалось войти через ${name}: ${error.message}`);
+    }
+}
+
+// ========== ВЫХОД ==========
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
     localStorage.removeItem('wasLoggedIn');
     window.signOut(auth);
 });
 
+// ========== ОТСЛЕЖИВАНИЕ ==========
 let authResolved = false;
 
 window.onAuthStateChanged(auth, async (user) => {
-    const loginScreen = document.getElementById('loginScreen');
-    const appScreen = document.getElementById('appScreen');
-    const loadingScreen = document.getElementById('loadingScreen');
-    
     if (user) {
-        // Пользователь авторизован
         window.currentUser = user;
         localStorage.setItem('wasLoggedIn', 'true');
         
         loginScreen.classList.add('d-none');
-        
         if (!authResolved) {
             loadingScreen.classList.remove('d-none');
             appScreen.classList.add('d-none');
         }
         
-        document.getElementById('userName').textContent = user.displayName.split(' ')[0];
+        const displayName = user.displayName || user.providerData[0]?.displayName || user.email?.split('@')[0] || 'Пользователь';
+        document.getElementById('userName').textContent = displayName.split(' ')[0];
+        
         const myUserIdEl = document.getElementById('myUserId');
         if (myUserIdEl) myUserIdEl.textContent = user.uid;
         
@@ -66,42 +180,38 @@ window.onAuthStateChanged(auth, async (user) => {
             const userSnap = await window.getDoc(userRef);
             if (!userSnap.exists()) {
                 await window.setDoc(userRef, {
-                    name: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
+                    name: displayName,
+                    email: user.email || user.providerData[0]?.email || '',
+                    photoURL: user.photoURL || user.providerData[0]?.photoURL || '',
+                    provider: user.providerData[0]?.providerId || 'password',
                     friends: [],
                     createdAt: Date.now()
                 });
             }
-        } catch (error) {
-            console.error('Ошибка профиля:', error);
-        }
+        } catch (e) {}
         
-        // Запускаем приложение
         if (!authResolved) {
             authResolved = true;
             if (window.initApp) await window.initApp();
         }
         
-        // Плавно показываем приложение
         loadingScreen.classList.add('d-none');
         appScreen.classList.remove('d-none');
         
+        console.log(`✅ Вход: ${user.providerData[0]?.providerId || 'email'}`);
     } else {
-        // Пользователь не авторизован
         window.currentUser = null;
         authResolved = false;
-        
         appScreen.classList.add('d-none');
         
         if (wasLoggedIn) {
-            // Был вход — показываем спиннер (ждём авто-вход)
             loadingScreen.classList.remove('d-none');
             loginScreen.classList.add('d-none');
         } else {
-            // Не было входа — показываем кнопку входа
             loadingScreen.classList.add('d-none');
             loginScreen.classList.remove('d-none');
         }
     }
 });
+
+console.log('✅ auth.js загружен (Email + Google + Yandex)');
