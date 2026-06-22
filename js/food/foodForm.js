@@ -70,7 +70,7 @@ window.renderFoodForm = function(editPlace = null) {
             photos: photosRaw ? photosRaw.split(',').map(s => s.trim()).filter(s => s) : [],
             description: document.getElementById('foodDesc').value.trim(),
             bestDish: document.getElementById('foodBestDish').value.trim(),
-            date: document.getElementById('foodDate').value,
+            date: document.getElementById('foodDate').value || '',
             notes: document.getElementById('foodNotes').value.trim(),
             author: window.currentUser?.displayName?.split(' ')[0] || 'Я',
             updatedAt: Date.now()

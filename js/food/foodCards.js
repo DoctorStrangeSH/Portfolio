@@ -47,16 +47,19 @@ window.createFoodCard = function(place, index) {
 // ========== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ (на document) ==========
 document.addEventListener('click', async (e) => {
     const markBtn = e.target.closest('.food-mark-btn');
-    if (markBtn) {
-        const id = markBtn.dataset.id;
-        const newStatus = markBtn.dataset.status;
-        await window.updateDoc(window.doc(window.db, window.getFoodCollection(), id), {
-            status: newStatus,
-            date: newStatus === 'visited' ? new Date().toISOString().split('T')[0] : undefined
-        });
-        window.loadFoodPlaces();
-        return;
+if (markBtn) {
+    const id = markBtn.dataset.id;
+    const newStatus = markBtn.dataset.status;
+    
+    const updateData = { status: newStatus };
+    if (newStatus === 'visited') {
+        updateData.date = new Date().toISOString().split('T')[0];
     }
+    
+    await window.updateDoc(window.doc(window.db, window.getFoodCollection(), id), updateData);
+    window.loadFoodPlaces();
+    return;
+}
     
     const editBtn = e.target.closest('.food-edit-btn');
     if (editBtn) {

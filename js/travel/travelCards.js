@@ -106,7 +106,11 @@ window.attachTravelHandlers = function() {
             if (date === null) return;
             const rating = prompt('⭐ Оценка (1-5):', '5');
             if (rating === null) return;
-            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { status: 'visited', date: date || new Date().toISOString().split('T')[0], rating: Math.min(5, Math.max(1, parseInt(rating)||5)) });
+           await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { 
+    status: 'visited', 
+    date: date || new Date().toISOString().split('T')[0], 
+    rating: Math.min(5, Math.max(1, parseInt(rating)||5)) 
+});
             window.loadTravelPlaces();
         };
     });
