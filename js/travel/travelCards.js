@@ -1,4 +1,4 @@
-// ==================== travelCards.js v4 ====================
+// ==================== travelCards.js v5 ====================
 
 const REACTIONS = [
     { emoji: '❤️', key: 'love' },
@@ -70,6 +70,7 @@ window.createTravelCard = function(place, index) {
                 <h5 class="position-absolute text-white fw-bold" style="bottom:8px;left:12px;text-shadow:0 1px 3px rgba(0,0,0,0.5);font-size:1.1rem;z-index:2">${place.name}</h5>
                 <div class="position-absolute d-flex gap-1" style="top:8px;left:8px;z-index:3"><span class="badge bg-dark bg-opacity-50">${cat.emoji} ${cat.name}</span>${season ? `<span class="badge bg-dark bg-opacity-50">${season.emoji} ${season.nameRu}</span>` : ''}</div>
                 ${photos.length > 1 ? `<span class="position-absolute badge bg-dark bg-opacity-50" style="top:8px;right:8px;z-index:3"><i class="bi bi-images me-1"></i>${photos.length}</span>` : ''}
+                ${place.album ? `<a href="${place.album}" target="_blank" class="position-absolute badge bg-primary bg-opacity-75" style="bottom:8px;right:8px;z-index:3;text-decoration:none"><i class="bi bi-folder2-open me-1"></i>Альбом</a>` : ''}
             </div>
             <div class="card-body d-flex flex-column p-3">
                 <div class="d-flex justify-content-between align-items-center mb-2"><span class="badge bg-light text-dark">${pr.emoji} ${pr.name}</span>${dayCounter ? `<span class="badge ${dayCounter.urgent ? 'bg-danger' : 'bg-info'}">${dayCounter.text}</span>` : ''}</div>
@@ -84,6 +85,7 @@ window.createTravelCard = function(place, index) {
                 <div class="d-flex gap-1 mb-2" id="reactions-${place._firestoreId}">${REACTIONS.map(r => `<button class="btn btn-sm btn-light reaction-btn ${(reactions[r.key]||0)>0?'active':''}" data-id="${place._firestoreId}" data-reaction="${r.key}" style="border-radius:20px;padding:2px 8px;font-size:0.8rem">${r.emoji} ${reactions[r.key]||0}</button>`).join('')}</div>
                 <div class="mt-auto d-flex gap-1 flex-wrap">
                     ${place.status === 'want' ? `<button class="btn btn-sm btn-outline-success travel-mark-btn" data-id="${place._firestoreId}"><i class="bi bi-check-lg"></i> Посетил</button>` : ''}
+                    ${place.album ? `<a href="${place.album}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-images"></i> Альбом</a>` : ''}
                     <button class="btn btn-sm btn-outline-info travel-detail-btn" data-id="${place._firestoreId}"><i class="bi bi-info-circle"></i></button>
                     <button class="btn btn-sm btn-outline-warning travel-edit-btn" data-id="${place._firestoreId}"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger travel-del-btn" data-id="${place._firestoreId}"><i class="bi bi-trash"></i></button>
@@ -106,11 +108,7 @@ window.attachTravelHandlers = function() {
             if (date === null) return;
             const rating = prompt('⭐ Оценка (1-5):', '5');
             if (rating === null) return;
-           await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { 
-    status: 'visited', 
-    date: date || new Date().toISOString().split('T')[0], 
-    rating: Math.min(5, Math.max(1, parseInt(rating)||5)) 
-});
+            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { status: 'visited', date: date || new Date().toISOString().split('T')[0], rating: Math.min(5, Math.max(1, parseInt(rating)||5)) });
             window.loadTravelPlaces();
         };
     });
@@ -148,17 +146,26 @@ window.attachTravelHandlers = function() {
             const reaction = btn.dataset.reaction;
             const p = window.travelState.places.find(x => x._firestoreId === id);
             if (!p) return;
+            
             const reactions = { ...(p.reactions||{}) };
-            reactions[reaction] = (reactions[reaction]||0)+1;
+            
+            // Toggle: убрать если уже стоит, поставить если нет
+            if (reactions[reaction] && reactions[reaction] > 0) {
+                delete reactions[reaction];
+            } else {
+                reactions[reaction] = 1;
+            }
+            
             await window.updateDoc(window.doc(window.db, window.getTravelCollection(), id), { reactions });
             p.reactions = reactions;
+            
             const container = document.getElementById(`reactions-${id}`);
             if (container) {
                 container.querySelectorAll('.reaction-btn').forEach(b => {
                     const r = b.dataset.reaction;
                     const emojis = { love:'❤️', fire:'🔥', wow:'😍', photo:'📸', money:'💸' };
                     b.textContent = `${emojis[r]} ${reactions[r]||0}`;
-                    b.classList.toggle('active', (reactions[r]||0)>0);
+                    b.classList.toggle('active', (reactions[r]||0) > 0);
                 });
             }
         };
@@ -186,7 +193,7 @@ window.showTravelAddModal = function() {
             <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label fw-medium">Название *</label><input type="text" class="form-control" id="taName" required placeholder="Мурманск..."></div><div class="col-md-6"><label class="form-label fw-medium">Местоположение</label><input type="text" class="form-control" id="taLocation" placeholder="Адрес"></div></div>
             <div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label fw-medium">Категория</label><select class="form-select" id="taCategory">${Object.entries(window.TRAVEL_CATEGORIES).map(([k,v])=>`<option value="${k}">${v.emoji} ${v.name}</option>`).join('')}</select></div><div class="col-md-4"><label class="form-label fw-medium">Приоритет</label><select class="form-select" id="taPriority"><option value="high">🔥 Очень хочу</option><option value="medium" selected>🙂 Было бы круто</option><option value="low">💭 Когда-нибудь</option></select></div><div class="col-md-4"><label class="form-label fw-medium">Бюджет (₽)</label><input type="number" class="form-control" id="taBudget" placeholder="50000"></div></div>
             <div class="mb-3"><label class="form-label fw-medium">📸 Фотографии</label><textarea class="form-control" id="taPhotos" rows="2" placeholder="Ссылки через запятую"></textarea></div>
-            <div class="mb-3"><label class="form-label fw-medium">🔗 Альбом Flickr</label><input type="url" class="form-control" id="taAlbum"></div>
+            <div class="mb-3"><label class="form-label fw-medium">🔗 Альбом Flickr</label><input type="url" class="form-control" id="taAlbum" placeholder="https://flickr.com/..."></div>
             <div class="mb-3"><label class="form-label fw-medium">📝 Описание</label><textarea class="form-control" id="taDesc" rows="2"></textarea></div>
             <div class="mb-3"><label class="form-label fw-medium">🏷️ Теги</label><input type="text" class="form-control" id="taTags" placeholder="романтика, бюджетно..."></div>
             <div class="mb-3"><label class="form-label fw-medium">📌 Статус</label><select class="form-select" id="taStatus"><option value="want" selected>🌍 Хочу посетить</option><option value="visited">✅ Уже посетил(а)</option></select></div>
@@ -247,6 +254,7 @@ function showTravelEditModal(place) {
             <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label fw-medium">Название *</label><input type="text" class="form-control" id="teName" required value="${place.name}"></div><div class="col-md-6"><label class="form-label fw-medium">Местоположение</label><input type="text" class="form-control" id="teLocation" value="${place.location||''}"></div></div>
             <div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label fw-medium">Категория</label><select class="form-select" id="teCategory">${Object.entries(window.TRAVEL_CATEGORIES).map(([k,v])=>`<option value="${k}" ${place.category===k?'selected':''}>${v.emoji} ${v.name}</option>`).join('')}</select></div><div class="col-md-4"><label class="form-label fw-medium">Приоритет</label><select class="form-select" id="tePriority"><option value="high" ${place.priority==='high'?'selected':''}>🔥 Очень хочу</option><option value="medium" ${place.priority==='medium'?'selected':''}>🙂 Интересно</option><option value="low" ${place.priority==='low'?'selected':''}>💭 Когда-нибудь</option></select></div><div class="col-md-4"><label class="form-label fw-medium">Бюджет</label><input type="number" class="form-control" id="teBudget" value="${place.budget||''}"></div></div>
             <div class="mb-3"><label class="form-label fw-medium">Фото</label><textarea class="form-control" id="tePhotos" rows="2">${(place.photos||[]).join(', ')}</textarea></div>
+            <div class="mb-3"><label class="form-label fw-medium">🔗 Альбом Flickr</label><input type="url" class="form-control" id="teAlbum" value="${place.album||''}"></div>
             <div class="mb-3"><label class="form-label fw-medium">Описание</label><textarea class="form-control" id="teDesc" rows="2">${place.description||''}</textarea></div>
             <div class="mb-3"><label class="form-label fw-medium">Теги</label><input type="text" class="form-control" id="teTags" value="${(place.tags||[]).join(', ')}"></div>
             <div class="mb-3"><label class="form-label fw-medium">Статус</label><select class="form-select" id="teStatus"><option value="want" ${place.status==='want'?'selected':''}>🌍 Хочу</option><option value="visited" ${place.status==='visited'?'selected':''}>✅ Посетил</option></select></div>
@@ -272,6 +280,7 @@ function showTravelEditModal(place) {
             priority: document.getElementById('tePriority').value,
             budget: parseInt(document.getElementById('teBudget').value)||0,
             photos: pr ? pr.split(',').map(s=>s.trim()).filter(s=>s) : [],
+            album: document.getElementById('teAlbum').value.trim(),
             description: document.getElementById('teDesc').value.trim(),
             tags: tr ? tr.split(',').map(s=>s.trim().toLowerCase()).filter(s=>s) : [],
             status, date: status==='visited' ? document.getElementById('teDate').value : '',
@@ -298,6 +307,7 @@ window.showTravelDetail = function(place) {
         <p><strong>Бюджет:</strong> ${place.budget?window.formatBudget(place.budget):'—'}</p>
         ${place.location?`<p><strong>Местоположение:</strong> ${place.location}</p>`:''}
         ${tags.length?`<p><strong>Теги:</strong> ${tags.map(t=>`<span class="badge bg-light text-dark me-1">#${t}</span>`).join('')}</p>`:''}
+        ${place.album?`<p><a href="${place.album}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-images"></i> Открыть альбом</a></p>`:''}
         <p><strong>Добавлено:</strong> ${window.timeAgo(place.createdAt)}</p><p><strong>Просмотров:</strong> ${place.views||0}</p>
         ${place.status==='visited'?`<p><strong>Оценка:</strong> ${window.renderStars(place.rating)}</p>`:''}
         <hr><h6>📝 Дневник</h6>${diaryHTML}`;
