@@ -9,17 +9,13 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="css/style.css" rel="stylesheet">
     <style>
-        /* Стили для экрана загрузки */
         #loadingScreen {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        
-        /* Анимация появления */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
         #loadingScreen > div {
             animation: fadeIn 0.6s ease;
         }
@@ -30,7 +26,6 @@
     <!-- ==================== ЗАГРУЗКА ==================== -->
     <div id="loadingScreen" class="d-flex flex-column justify-content-center align-items-center vh-100">
         <div style="text-align:center">
-            <!-- ЗАМЕНИТЕ НА ВАШЕ НАЗВАНИЕ ФАЙЛА -->
             <img src="img/enotik.gif" alt="Загрузка..." 
                  style="width:140px;height:140px;border-radius:50%;background:white;padding:10px;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
             <p class="text-white mt-4 fw-bold fs-5">Загружаем ваш мир...</p>
@@ -48,11 +43,9 @@
         <h1 class="mt-3 fw-bold">Мой Мир</h1>
         <p class="text-muted mb-4">Путешествия, рестораны, фильмы — всё в одном</p>
         
-        <!-- Форма входа -->
         <div class="card shadow-sm mb-3" style="max-width:360px;width:100%">
             <div class="card-body p-4">
                 
-                <!-- Вход по почте -->
                 <form id="emailLoginForm" autocomplete="on">
                     <h6 class="mb-3 text-center">Войти</h6>
                     <div class="mb-2">
@@ -68,7 +61,6 @@
                     </div>
                 </form>
                 
-                <!-- Регистрация -->
                 <form id="registerForm" class="d-none" autocomplete="on">
                     <h6 class="mb-3 text-center">Регистрация</h6>
                     <div class="mb-2">
@@ -84,7 +76,6 @@
                     <a href="#" id="showLogin" class="small">Уже есть аккаунт? Войти</a>
                 </form>
                 
-                <!-- Сброс пароля -->
                 <form id="resetForm" class="d-none">
                     <h6 class="mb-3 text-center">Сброс пароля</h6>
                     <p class="small text-muted">Отправим ссылку для сброса на вашу почту</p>
@@ -97,14 +88,12 @@
             </div>
         </div>
         
-        <!-- Разделитель -->
         <div class="d-flex align-items-center gap-3 mb-3" style="max-width:360px;width:100%">
             <hr class="flex-grow-1">
             <span class="text-muted small">или</span>
             <hr class="flex-grow-1">
         </div>
         
-        <!-- Google -->
         <button id="loginGoogleBtn" class="btn btn-light border shadow-sm py-3 d-flex align-items-center justify-content-center" style="max-width:360px;width:100%">
             <img src="https://www.google.com/favicon.ico" width="20" class="me-2">
             <span>Войти через Google</span>
@@ -116,7 +105,6 @@
     <!-- ==================== ПРИЛОЖЕНИЕ ==================== -->
     <div id="appScreen" class="d-none">
         
-        <!-- Навигация -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
             <div class="container">
                 <span class="navbar-brand fw-bold"><i class="bi bi-compass me-2"></i>Мой Мир</span>
@@ -131,7 +119,6 @@
             </div>
         </nav>
 
-        <!-- Меню разделов -->
         <div class="bg-white border-bottom shadow-sm">
             <div class="container">
                 <ul class="nav nav-pills py-2 flex-nowrap overflow-auto" id="sectionMenu">
@@ -143,11 +130,10 @@
             </div>
         </div>
 
-        <!-- Контейнер разделов -->
         <div id="sectionContainer" class="container py-3"></div>
     </div>
 
-    <!-- ==================== МОДАЛКА ДРУЗЕЙ ==================== -->
+    <!-- ==================== МОДАЛКИ ==================== -->
     <div class="modal fade" id="friendsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -170,12 +156,10 @@
         </div>
     </div>
 
-    <!-- ==================== МОДАЛКА ГАЛЕРЕИ ==================== -->
     <div class="modal fade" id="photoModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content bg-dark border-0"><div class="modal-header border-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body text-center"><img id="modalMainPhoto" src="" class="rounded mb-3 shadow"><div id="modalThumbnails" class="d-flex justify-content-center gap-2 flex-wrap"></div></div></div></div>
     </div>
 
-    <!-- ==================== МОДАЛКА ДЕТАЛЕЙ ==================== -->
     <div class="modal fade" id="placeDetailModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content border-0 shadow"><div class="modal-header bg-light"><h5 class="modal-title" id="detailTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="detailBody"></div></div></div>
     </div>
@@ -209,29 +193,49 @@
         window.getDoc = getDoc;
         window.arrayUnion = arrayUnion;
         
-        // Ядро
+        // Загружаем все модули
         await import('./js/core/auth.js');
         await import('./js/core/friends.js');
         await import('./js/core/utils.js');
         await import('./js/core/stars.js');
         await import('./js/core/gallery.js');
         await import('./js/core/privacy.js');
-        
-        // Раздел путешествий
         await import('./js/travel/travelCards.js');
         await import('./js/travel/travelMap.js');
         await import('./js/travel/travelForm.js');
         await import('./js/travel/travelList.js');
-        
-        // Раздел ресторанов
         await import('./js/food/foodCards.js');
         await import('./js/food/foodForm.js');
         await import('./js/food/foodList.js');
-        
-        // Запуск
         await import('./js/app.js');
         
         console.log('✅ Все модули загружены');
+        
+        // Ждём пользователя и запускаем приложение
+        window.onAuthStateChanged(window.auth, async (user) => {
+            if (user) {
+                window.currentUser = user;
+                
+                if (!window._appInitialized) {
+                    window._appInitialized = true;
+                    
+                    document.getElementById('loadingScreen').classList.remove('d-none');
+                    document.getElementById('loginScreen').classList.add('d-none');
+                    document.getElementById('appScreen').classList.add('d-none');
+                    
+                    if (window.initApp) {
+                        await window.initApp();
+                    }
+                    
+                    document.getElementById('loadingScreen').classList.add('d-none');
+                    document.getElementById('appScreen').classList.remove('d-none');
+                }
+            } else {
+                document.getElementById('loadingScreen').classList.add('d-none');
+                document.getElementById('appScreen').classList.add('d-none');
+                document.getElementById('loginScreen').classList.remove('d-none');
+            }
+        });
     </script>
 </body>
 </html>
