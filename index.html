@@ -92,7 +92,7 @@
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content border-0 shadow"><div class="modal-header bg-light"><h5 class="modal-title" id="detailTitle"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="detailBody"></div></div></div>
     </div>
 
-    <!-- СКРИПТЫ -->
+     <!-- СКРИПТЫ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -121,14 +121,28 @@
         window.getDoc = getDoc;
         window.arrayUnion = arrayUnion;
         
-        // Загружаем модули
+        // Модули ядра
         await import('./js/core/auth.js');
         await import('./js/core/friends.js');
         await import('./js/core/utils.js');
         await import('./js/core/stars.js');
         await import('./js/core/gallery.js');
-        await import('./js/app.js');
         await import('./js/core/privacy.js');
+        
+        // Модули разделов
+        await import('./js/travel/travelCards.js');
+        await import('./js/travel/travelMap.js');
+        await import('./js/travel/travelForm.js');
+        await import('./js/travel/travelList.js');
+        
+        await import('./js/food/foodCards.js');
+        await import('./js/food/foodForm.js');
+        await import('./js/food/foodList.js');
+        
+        // Запуск приложения
+        await import('./js/app.js');
+        
+        console.log('✅ Все модули загружены');
     </script>
 </body>
 </html>
