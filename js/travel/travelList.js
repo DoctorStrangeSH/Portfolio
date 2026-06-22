@@ -156,7 +156,7 @@ window.renderTravelSection = function(container) {
         </div>
     `;
     
-    // Загружаем форму и карту (модули уже загружены)
+    // Загружаем форму и карту
     if (window.renderTravelForm) window.renderTravelForm();
     if (window.initTravelMap) window.initTravelMap();
     
@@ -165,6 +165,25 @@ window.renderTravelSection = function(container) {
         window.travelState.searchQuery = this.value;
         renderTravelContent();
     });
+    
+    // Сохраняем подвкладку при переключении
+    document.querySelectorAll('#travelTabs button[data-bs-toggle="tab"]').forEach(btn => {
+        btn.addEventListener('shown.bs.tab', function(e) {
+            const target = e.target.dataset.bsTarget;
+            if (target) {
+                localStorage.setItem('travelActiveTab', target.replace('#', ''));
+            }
+        });
+    });
+    
+    // Восстанавливаем сохранённую подвкладку
+    setTimeout(() => {
+        const savedTab = localStorage.getItem('travelActiveTab') || 'travelWishlistTab';
+        const tabBtn = document.querySelector(`#travelTabs button[data-bs-target="#${savedTab}"]`);
+        if (tabBtn) {
+            new bootstrap.Tab(tabBtn).show();
+        }
+    }, 400);
     
     // Фишки списков
     if (window.renderListChips) window.renderListChips();
