@@ -1,8 +1,10 @@
 // ==================== app.js ====================
-window.currentSection = 'travel';
+
+// Восстанавливаем сохранённый раздел
+window.currentSection = localStorage.getItem('currentSection') || 'travel';
 
 window.initApp = async function() {
-    // Загружаем модули разделов ДО использования
+    // Загружаем модули разделов
     await import('./travel/travelCards.js');
     await import('./travel/travelMap.js');
     await import('./travel/travelForm.js');
@@ -25,14 +27,24 @@ window.initApp = async function() {
             btn.classList.add('active');
             
             window.currentSection = btn.dataset.section;
+            localStorage.setItem('currentSection', window.currentSection);
             loadCurrentSection();
         });
     });
     
-    // Загружаем раздел по умолчанию
+    // Активируем нужную кнопку меню
+    document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
+        if (btn.dataset.section === window.currentSection) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Загружаем сохранённый раздел
     loadCurrentSection();
     
-    console.log('✅ Все модули загружены');
+    console.log('✅ Все модули загружены (текущий раздел: ' + window.currentSection + ')');
 };
 
 function loadCurrentSection() {

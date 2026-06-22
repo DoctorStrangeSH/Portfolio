@@ -1,5 +1,4 @@
 // ==================== travelCards.js v3 ====================
-// Хэштеги, аватарки друзей, приватность, счётчики, реакции, сезоны
 
 const REACTIONS = [
     { emoji: '❤️', key: 'love' },
@@ -41,32 +40,6 @@ function getDayCounter(dateStr, status) {
     return null;
 }
 
-function getFriendAvatars(place, friends, currentList) {
-    if (!friends || !friends.length) return '';
-    
-    const interested = friends.filter(f => {
-        if (!f.interests) return false;
-        return f.interests.some(i => i.placeId === place._firestoreId);
-    });
-    
-    if (!interested.length) return '';
-    
-    const avatars = interested.slice(0, 3).map(f => `
-        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center me-1" 
-             style="width:24px;height:24px;font-size:0.65rem;cursor:help"
-             title="${f.name}: ${f.interests.find(i => i.placeId === place._firestoreId)?.status === 'visited' ? '✅ Посетил(а)' : '🔖 Хочет посетить'}">
-            ${f.name.charAt(0).toUpperCase()}
-        </div>
-    `).join('');
-    
-    const extra = interested.length > 3 ? `<span class="small text-muted">+${interested.length - 3}</span>` : '';
-    
-    return `<div class="d-flex align-items-center mt-1" title="Друзья, которые интересуются этим местом">
-        <small class="text-muted me-1">👥</small>${avatars}${extra}
-    </div>`;
-}
-
-// ========== КАРТОЧКА ==========
 window.createTravelCard = function(place, index) {
     const col = document.createElement('div');
     col.className = 'col-md-6 col-lg-4 fade-in-up';
@@ -88,14 +61,10 @@ window.createTravelCard = function(place, index) {
     const tags = place.tags || [];
     const sliderId = `slider-${place._firestoreId}`;
     
-    // Аватарки друзей
-    const friendAvatars = getFriendAvatars(place, window.friends, window.currentList);
-    
     col.innerHTML = `
         <div class="card h-100 shadow-sm travel-card-v2 mb-3 border-0 overflow-hidden" 
              style="border-left:5px solid ${season ? season.color : '#dee2e6'}">
             
-            <!-- ОБЛОЖКА -->
             <div class="position-relative">
                 ${photos.length > 1 ? `
                 <div class="photo-slider" id="${sliderId}">
@@ -106,11 +75,9 @@ window.createTravelCard = function(place, index) {
                 </div>` : `
                 <img src="${mainPhoto}" class="card-img-top" style="height:220px;object-fit:cover" ${photos.length>0?`onclick="window.openGallery(${photosJson},0)" style="cursor:pointer"`:''}>`}
                 
-                <!-- Градиент -->
                 <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(0,0,0,0.7));pointer-events:none"></div>
                 <h5 class="position-absolute text-white fw-bold" style="bottom:8px;left:12px;text-shadow:0 1px 3px rgba(0,0,0,0.5);font-size:1.1rem;z-index:2">${place.name}</h5>
                 
-                <!-- Бейджи -->
                 <div class="position-absolute d-flex gap-1" style="top:8px;left:8px;z-index:3">
                     <span class="badge bg-dark bg-opacity-50">${cat.emoji} ${cat.name}</span>
                     ${season ? `<span class="badge bg-dark bg-opacity-50">${season.emoji} ${season.nameRu}</span>` : ''}
@@ -118,38 +85,28 @@ window.createTravelCard = function(place, index) {
                 ${photos.length > 1 ? `<span class="position-absolute badge bg-dark bg-opacity-50" style="top:8px;right:8px;z-index:3"><i class="bi bi-images me-1"></i>${photos.length}</span>` : ''}
             </div>
             
-            <!-- КОНТЕНТ -->
             <div class="card-body d-flex flex-column p-3">
                 
-                <!-- Приоритет + счётчик -->
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="badge bg-light text-dark">${pr.emoji} ${pr.name}</span>
                     ${dayCounter ? `<span class="badge ${dayCounter.urgent ? 'bg-danger' : 'bg-info'}">${dayCounter.text}</span>` : ''}
                 </div>
                 
-                <!-- Описание -->
                 ${place.description ? `<p class="card-text text-muted small flex-grow-1" style="line-height:1.4">${place.description}</p>` : ''}
                 
-                <!-- Хэштеги -->
                 ${tags.length > 0 ? `
                 <div class="d-flex flex-wrap gap-1 mb-2">
                     ${tags.map(t => `<span class="badge bg-light text-secondary" style="font-size:0.7rem;cursor:pointer" onclick="window.travelState.searchQuery='${t}';window.renderTravelContent()">#${t}</span>`).join('')}
                 </div>` : ''}
                 
-                <!-- Статистика -->
                 <div class="d-flex gap-3 text-muted small mb-2">
                     ${place.budget ? `<span><i class="bi bi-cash me-1"></i>${window.formatBudget(place.budget)}</span>` : ''}
                     ${place.diary?.length ? `<span><i class="bi bi-journal-text me-1"></i>${place.diary.length}</span>` : ''}
                     ${place.views ? `<span><i class="bi bi-eye me-1"></i>${place.views}</span>` : ''}
                 </div>
                 
-                <!-- Аватарки друзей -->
-                ${friendAvatars}
-                
-                <!-- Рейтинг -->
                 ${place.status === 'visited' ? `<div class="d-flex align-items-center gap-2 mb-2">${window.renderStars(place.rating)}</div>` : ''}
                 
-                <!-- Реакции -->
                 <div class="d-flex gap-1 mb-2" id="reactions-${place._firestoreId}">
                     ${REACTIONS.map(r => `
                         <button class="btn btn-sm btn-light reaction-btn ${(reactions[r.key] || 0) > 0 ? 'active' : ''}" 
@@ -160,7 +117,6 @@ window.createTravelCard = function(place, index) {
                     `).join('')}
                 </div>
                 
-                <!-- Кнопки -->
                 <div class="mt-auto d-flex gap-1 flex-wrap">
                     ${place.status === 'want' ? `<button class="btn btn-sm btn-outline-success travel-mark-btn" data-id="${place._firestoreId}"><i class="bi bi-check-lg"></i> Посетил</button>` : ''}
                     <button class="btn btn-sm btn-outline-info travel-detail-btn" data-id="${place._firestoreId}"><i class="bi bi-info-circle"></i></button>
@@ -183,8 +139,22 @@ window.createTravelCard = function(place, index) {
 window.attachTravelHandlers = function() {
     document.querySelectorAll('.travel-mark-btn').forEach(b => {
         b.onclick = async () => {
-            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), {
-                status: 'visited', date: new Date().toISOString().split('T')[0], rating: 0
+            const id = b.dataset.id;
+            const p = window.travelState.places.find(x => x._firestoreId === id);
+            if (!p) return;
+            
+            const date = prompt('📅 Дата поездки (ГГГГ-ММ-ДД):', new Date().toISOString().split('T')[0]);
+            if (date === null) return;
+            
+            const rating = prompt('⭐ Оценка (1-5):', '5');
+            if (rating === null) return;
+            
+            const ratingNum = Math.min(5, Math.max(1, parseInt(rating) || 5));
+            
+            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), id), {
+                status: 'visited', 
+                date: date || new Date().toISOString().split('T')[0], 
+                rating: ratingNum
             });
             window.loadTravelPlaces();
         };
@@ -210,15 +180,12 @@ window.attachTravelHandlers = function() {
         b.onclick = async () => {
             const p = window.travelState.places.find(x => x._firestoreId === b.dataset.id);
             if (!p) return;
-            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), {
-                views: (p.views || 0) + 1
-            });
+            await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { views: (p.views || 0) + 1 });
             p.views = (p.views || 0) + 1;
             window.showTravelDetail(p);
         };
     });
     
-    // Реакции
     document.querySelectorAll('.reaction-btn').forEach(btn => {
         btn.onclick = async (e) => {
             e.stopPropagation();
@@ -246,7 +213,6 @@ window.attachTravelHandlers = function() {
     });
 };
 
-// ========== ДЕТАЛИ ==========
 window.showTravelDetail = function(place) {
     document.getElementById('detailTitle').textContent = place.name;
     const cat = window.TRAVEL_CATEGORIES[place.category] || window.TRAVEL_CATEGORIES.other;
@@ -273,9 +239,10 @@ window.showTravelDetail = function(place) {
         ${tags.length ? `<p><strong>Теги:</strong> ${tags.map(t => `<span class="badge bg-light text-dark me-1">#${t}</span>`).join('')}</p>` : ''}
         <p><strong>Добавлено:</strong> ${window.timeAgo(place.createdAt)}</p>
         <p><strong>Просмотров:</strong> ${place.views || 0}</p>
+        ${place.status === 'visited' ? `<p><strong>Оценка:</strong> ${window.renderStars(place.rating)}</p>` : ''}
         <hr><h6>📝 Дневник</h6>${diaryHTML}
     `;
     new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
 };
 
-console.log('✅ travelCards.js v3 загружен (хэштеги, аватарки, счётчики, реакции, сезоны)');
+console.log('✅ travelCards.js загружен');

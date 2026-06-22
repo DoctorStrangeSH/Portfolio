@@ -191,7 +191,6 @@ window.renderTravelForm = function(editPlace = null) {
     // Кнопка Отмена
     document.getElementById('travelCancel').onclick = () => {
         resetTravelForm();
-        // Переключаем на вкладку "Хочу посетить"
         const wishTab = document.querySelector('#travelTabs button[data-bs-target="#travelWishlistTab"]');
         if (wishTab) new bootstrap.Tab(wishTab).show();
     };
@@ -212,6 +211,10 @@ window.renderTravelForm = function(editPlace = null) {
         const photosRaw = document.getElementById('travelPhotos').value.trim();
         const tagsRaw = document.getElementById('travelTags').value.trim();
         
+        // Получаем рейтинг
+        const rating = status === 'visited' ? window.getStarRating('travelStars') : 0;
+        console.log('⭐ Сохраняем рейтинг:', rating);
+        
         const data = {
             name: name,
             location: document.getElementById('travelLocation').value.trim(),
@@ -225,7 +228,7 @@ window.renderTravelForm = function(editPlace = null) {
             diary: window._travelDiary || [],
             status: status,
             date: status === 'visited' ? document.getElementById('travelDate').value : '',
-            rating: status === 'visited' ? window.getStarRating('travelStars') : 0,
+            rating: rating,
             author: window.currentUser?.displayName?.split(' ')[0] || 'Я',
             updatedAt: Date.now()
         };
@@ -234,26 +237,19 @@ window.renderTravelForm = function(editPlace = null) {
         
         try {
             if (editId) {
-                await window.updateDoc(
-                    window.doc(window.db, window.getTravelCollection(), editId), 
-                    data
-                );
+                await window.updateDoc(window.doc(window.db, window.getTravelCollection(), editId), data);
                 console.log('✅ Обновлено:', editId);
             } else {
                 data.createdAt = Date.now();
                 data.views = 0;
                 data.reactions = {};
-                const docRef = await window.addDoc(
-                    window.collection(window.db, window.getTravelCollection()), 
-                    data
-                );
-                console.log('✅ Добавлено, ID:', docRef.id);
+                await window.addDoc(window.collection(window.db, window.getTravelCollection()), data);
+                console.log('✅ Добавлено');
             }
             
             resetTravelForm();
             await window.loadTravelPlaces();
             
-            // Переключаем на "Хочу посетить"
             const wishTab = document.querySelector('#travelTabs button[data-bs-target="#travelWishlistTab"]');
             if (wishTab) new bootstrap.Tab(wishTab).show();
             
@@ -261,7 +257,7 @@ window.renderTravelForm = function(editPlace = null) {
             
         } catch (error) {
             console.error('❌ Ошибка сохранения:', error);
-            alert('❌ Ошибка: ' + (error.message || 'Не удалось сохранить. Проверьте консоль.'));
+            alert('❌ Ошибка: ' + (error.message || 'Не удалось сохранить.'));
         }
     };
     
@@ -334,9 +330,8 @@ function resetTravelForm() {
     window.setupStarRating('travelStars', 0);
 }
 
-// Заполнение формы при редактировании (вызывается из карточек)
+// Заполнение формы при редактировании
 window.fillTravelForm = function(place) {
-    // Заполняем скрытое поле
     document.getElementById('travelEditId').value = place._firestoreId;
     document.getElementById('travelName').value = place.name || '';
     document.getElementById('travelLocation').value = place.location || '';
@@ -349,16 +344,13 @@ window.fillTravelForm = function(place) {
     document.getElementById('travelTags').value = (place.tags || []).join(', ');
     document.getElementById('travelStatus').value = place.status || 'want';
     
-    // Дневник
     window._travelDiary = (place.diary || []).slice();
     renderTravelDiaryFields();
     
-    // Заголовок и кнопки
     document.getElementById('travelFormTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Редактировать место';
     document.getElementById('travelSubmit').innerHTML = '<i class="bi bi-check-lg me-1"></i>Сохранить изменения';
     document.getElementById('travelCancel').classList.remove('d-none');
     
-    // Поля для посещённых
     const visitedFields = document.getElementById('travelVisitedFields');
     if (place.status === 'visited') {
         visitedFields.classList.remove('d-none');
@@ -369,18 +361,15 @@ window.fillTravelForm = function(place) {
         window.setupStarRating('travelStars', 0);
     }
     
-    // Переключиться на вкладку добавления
     const addTab = document.querySelector('#travelTabs button[data-bs-target="#travelAddTab"]');
     if (addTab) {
         new bootstrap.Tab(addTab).show();
-        // Прокрутка к форме
         setTimeout(() => {
             document.getElementById('travelFormContainer')?.scrollIntoView({ behavior: 'smooth' });
         }, 200);
     }
 };
 
-// Экспортируем renderTravelDiaryFields для внешнего использования
 window.renderTravelDiaryFields = renderTravelDiaryFields;
 
-console.log('✅ travelForm.js загружен (поля: теги, дневник, местоположение, бюджет)');
+console.log('✅ travelForm.js загружен');
