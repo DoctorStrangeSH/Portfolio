@@ -65,6 +65,7 @@ function renderTravelContent() {
     renderTravelCards('travelWishlist', wish, 'travelWishEmpty');
     renderTravelCards('travelVisited', vis, 'travelVisEmpty');
     renderTravelFilters();
+    updateTravelBudget();
 }
 
 function renderTravelFilters() {
@@ -87,6 +88,19 @@ function renderTravelFilters() {
     });
 }
 
+function updateTravelBudget() {
+    const el = document.getElementById('travelBudget');
+    if (!el) return;
+    const visited = window.travelState.places.filter(p => p.status === 'visited' && p.budget);
+    const total = visited.reduce((s, p) => s + (parseInt(p.budget) || 0), 0);
+    if (total > 0) {
+        el.innerHTML = `💰 Общий бюджет: <strong>${window.formatBudget(total)}</strong> (${visited.length} поездок)`;
+        el.classList.remove('d-none');
+    } else {
+        el.classList.add('d-none');
+    }
+}
+
 function renderTravelCards(containerId, arr, emptyId) {
     const c = document.getElementById(containerId);
     const e = document.getElementById(emptyId);
@@ -98,19 +112,18 @@ function renderTravelCards(containerId, arr, emptyId) {
     }
     e.classList.add('d-none');
     arr.forEach((place, i) => {
-        const card = window.createTravelCard(place, i);
-        if (card) c.appendChild(card);
+        if (window.createTravelCard) {
+            const card = window.createTravelCard(place, i);
+            if (card) c.appendChild(card);
+        }
     });
-    window.attachTravelHandlers();
+    if (window.attachTravelHandlers) window.attachTravelHandlers();
 }
 
 // ========== РЕНДЕР РАЗДЕЛА ==========
 window.renderTravelSection = function(container) {
     container.innerHTML = `
-        <!-- Фишки списков -->
         <div class="d-flex gap-2 flex-wrap align-items-center mb-3 overflow-auto pb-1" id="travelListChips"></div>
-        
-        <!-- Поиск и фильтры -->
         <div class="row g-2 mb-3">
             <div class="col-md-6">
                 <div class="input-group">
@@ -122,18 +135,13 @@ window.renderTravelSection = function(container) {
                 <div class="d-flex gap-2 flex-wrap" id="travelFilters"></div>
             </div>
         </div>
-        
-        <!-- Бюджет -->
         <div id="travelBudget" class="budget-summary d-none mb-3"></div>
-        
-        <!-- Вкладки -->
         <ul class="nav nav-tabs mb-3" id="travelTabs">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#travelWishlistTab">🌍 Хочу <span class="badge bg-secondary ms-1" id="travelWishCount">0</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelVisitedTab">✅ Посетил <span class="badge bg-secondary ms-1" id="travelVisCount">0</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelAddTab">➕ Добавить</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#travelMapTab">🗺️ Карта</button></li>
         </ul>
-        
         <div class="tab-content">
             <div class="tab-pane fade show active" id="travelWishlistTab">
                 <div class="row g-3" id="travelWishlist"></div>
@@ -148,11 +156,9 @@ window.renderTravelSection = function(container) {
         </div>
     `;
     
-    // Загружаем форму
-    import('./travelForm.js').then(mod => mod.renderTravelForm());
-    
-    // Загружаем карту
-    import('./travelMap.js').then(mod => mod.initTravelMap());
+    // Загружаем форму и карту (модули уже загружены)
+    if (window.renderTravelForm) window.renderTravelForm();
+    if (window.initTravelMap) window.initTravelMap();
     
     // Поиск
     document.getElementById('travelSearch').addEventListener('input', function() {
@@ -160,7 +166,7 @@ window.renderTravelSection = function(container) {
         renderTravelContent();
     });
     
-    // Обновляем фишки списков
+    // Фишки списков
     if (window.renderListChips) window.renderListChips();
     
     // Загружаем места

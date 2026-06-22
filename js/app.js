@@ -1,17 +1,7 @@
 // ==================== app.js ====================
 window.currentSection = 'travel';
 
-// Загруженные модули разделов
-const sectionModules = {
-    travel: null,
-    food: null
-};
-
 window.initApp = async function() {
-    // Загружаем модули разделов
-    sectionModules.travel = await import('./travel/travelList.js');
-    sectionModules.food = await import('./food/foodList.js');
-    
     // Загружаем друзей
     if (window.loadFriends) await window.loadFriends();
     if (window.listenFriends) window.listenFriends();
@@ -39,13 +29,13 @@ function loadCurrentSection() {
     
     switch (window.currentSection) {
         case 'travel':
-            if (sectionModules.travel?.renderTravelSection) {
-                sectionModules.travel.renderTravelSection(container);
+            if (window.renderTravelSection) {
+                window.renderTravelSection(container);
             }
             break;
         case 'food':
-            if (sectionModules.food?.renderFoodSection) {
-                sectionModules.food.renderFoodSection(container);
+            if (window.renderFoodSection) {
+                window.renderFoodSection(container);
             }
             break;
         default:
