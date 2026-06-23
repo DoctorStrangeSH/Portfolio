@@ -1,4 +1,4 @@
-// ==================== travelCards.js v5 ====================
+// ==================== travelCards.js v6 ====================
 
 const REACTIONS = [
     { emoji: '❤️', key: 'love' },
@@ -85,7 +85,7 @@ window.createTravelCard = function(place, index) {
                 <div class="d-flex gap-1 mb-2" id="reactions-${place._firestoreId}">${REACTIONS.map(r => `<button class="btn btn-sm btn-light reaction-btn ${(reactions[r.key]||0)>0?'active':''}" data-id="${place._firestoreId}" data-reaction="${r.key}" style="border-radius:20px;padding:2px 8px;font-size:0.8rem">${r.emoji} ${reactions[r.key]||0}</button>`).join('')}</div>
                 <div class="mt-auto d-flex gap-1 flex-wrap">
                     ${place.status === 'want' ? `<button class="btn btn-sm btn-outline-success travel-mark-btn" data-id="${place._firestoreId}"><i class="bi bi-check-lg"></i> Посетил</button>` : ''}
-                    ${place.album ? `<a href="${place.album}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-images"></i> Альбом</a>` : ''}
+                    <button class="btn btn-sm btn-outline-secondary comment-btn" data-id="${place._firestoreId}" data-type="place" title="Комментарии"><i class="bi bi-chat-dots"></i></button>
                     <button class="btn btn-sm btn-outline-info travel-detail-btn" data-id="${place._firestoreId}"><i class="bi bi-info-circle"></i></button>
                     <button class="btn btn-sm btn-outline-warning travel-edit-btn" data-id="${place._firestoreId}"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger travel-del-btn" data-id="${place._firestoreId}"><i class="bi bi-trash"></i></button>
@@ -109,6 +109,7 @@ window.attachTravelHandlers = function() {
             const rating = prompt('⭐ Оценка (1-5):', '5');
             if (rating === null) return;
             await window.updateDoc(window.doc(window.db, window.getTravelCollection(), b.dataset.id), { status: 'visited', date: date || new Date().toISOString().split('T')[0], rating: Math.min(5, Math.max(1, parseInt(rating)||5)) });
+            window.logActivity('place_visited', p.name, '');
             window.loadTravelPlaces();
         };
     });
@@ -146,19 +147,14 @@ window.attachTravelHandlers = function() {
             const reaction = btn.dataset.reaction;
             const p = window.travelState.places.find(x => x._firestoreId === id);
             if (!p) return;
-            
             const reactions = { ...(p.reactions||{}) };
-            
-            // Toggle: убрать если уже стоит, поставить если нет
             if (reactions[reaction] && reactions[reaction] > 0) {
                 delete reactions[reaction];
             } else {
                 reactions[reaction] = 1;
             }
-            
             await window.updateDoc(window.doc(window.db, window.getTravelCollection(), id), { reactions });
             p.reactions = reactions;
-            
             const container = document.getElementById(`reactions-${id}`);
             if (container) {
                 container.querySelectorAll('.reaction-btn').forEach(b => {
@@ -229,6 +225,7 @@ window.showTravelAddModal = function() {
             createdAt: Date.now(), views: 0, reactions: {}, diary: []
         };
         await window.addDoc(window.collection(window.db, window.getTravelCollection()), data);
+        window.logActivity('place_added', name, '');
         modal.hide();
         window.loadTravelPlaces();
         alert('✅ Место добавлено!');
@@ -310,8 +307,17 @@ window.showTravelDetail = function(place) {
         ${place.album?`<p><a href="${place.album}" target="_blank" class="btn btn-sm btn-outline-info"><i class="bi bi-images"></i> Открыть альбом</a></p>`:''}
         <p><strong>Добавлено:</strong> ${window.timeAgo(place.createdAt)}</p><p><strong>Просмотров:</strong> ${place.views||0}</p>
         ${place.status==='visited'?`<p><strong>Оценка:</strong> ${window.renderStars(place.rating)}</p>`:''}
-        <hr><h6>📝 Дневник</h6>${diaryHTML}`;
+        <hr><h6>📝 Дневник</h6>${diaryHTML}
+        <button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.showComments('${place._firestoreId}', 'place')"><i class="bi bi-chat-dots me-1"></i>Комментарии</button>`;
     new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
 };
+
+// Глобальный обработчик комментариев
+document.addEventListener('click', function(e) {
+    var commentBtn = e.target.closest('.comment-btn');
+    if (commentBtn) {
+        window.showComments(commentBtn.dataset.id, commentBtn.dataset.type);
+    }
+});
 
 console.log('✅ travelCards.js загружен');

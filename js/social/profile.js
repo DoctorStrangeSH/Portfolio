@@ -23,25 +23,18 @@ window.showProfile = function(userId) {
 async function loadProfileData(userId) {
     var body = document.getElementById('profileBody');
     
-    // Загружаем профиль
     var profileSnap = await window.getDoc(window.doc(window.db, 'profiles', userId));
     var profile = profileSnap.exists() ? profileSnap.data() : {};
     
-    // Загружаем статистику
     var placesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/places'));
     var foodSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/food'));
     var moviesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/movies'));
     var dreamsSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/dreams'));
     
-    var places = [];
-    var food = [];
-    var movies = [];
-    var dreams = [];
-    
-    placesSnap.forEach(function(d) { places.push(d.data()); });
-    foodSnap.forEach(function(d) { food.push(d.data()); });
-    moviesSnap.forEach(function(d) { movies.push(d.data()); });
-    dreamsSnap.forEach(function(d) { dreams.push(d.data()); });
+    var places = []; placesSnap.forEach(function(d) { places.push(d.data()); });
+    var food = []; foodSnap.forEach(function(d) { food.push(d.data()); });
+    var movies = []; moviesSnap.forEach(function(d) { movies.push(d.data()); });
+    var dreams = []; dreamsSnap.forEach(function(d) { dreams.push(d.data()); });
     
     var visited = places.filter(function(p) { return p.status === 'visited'; }).length;
     var foodVisited = food.filter(function(f) { return f.status === 'visited' || f.status === 'favourite'; }).length;
@@ -60,6 +53,8 @@ async function loadProfileData(userId) {
             '<h4 class="mb-1">' + userName + '</h4>' +
             '<p class="text-muted">' + userBio + '</p>' +
             (isOwner ? '<button class="btn btn-sm btn-outline-primary" onclick="window.editProfile()"><i class="bi bi-pencil me-1"></i>Редактировать</button>' : '') +
+            '<button class="btn btn-sm btn-outline-success ms-1" onclick="window.showCollections()"><i class="bi bi-collection me-1"></i>Подборки</button>' +
+            '<button class="btn btn-sm btn-outline-info ms-1" onclick="window.showPublicMap()"><i class="bi bi-map me-1"></i>Карта</button>' +
         '</div>' +
         '<div class="row g-2 mb-3">' +
             '<div class="col-3"><div class="card text-center p-2"><div style="font-size:1.5rem">✈️</div><strong>' + places.length + '</strong><small class="text-muted d-block">Мест</small></div></div>' +

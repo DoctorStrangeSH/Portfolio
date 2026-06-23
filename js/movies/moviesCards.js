@@ -5,7 +5,6 @@ window.createMovieCard = function(movie, index) {
     col.className = 'col-md-6 col-lg-3 fade-in-up';
     col.style.animationDelay = (index * 0.03) + 's';
     
-    // Прокси для картинок
     var poster = movie.poster;
     if (poster && poster.indexOf('image.tmdb.org') !== -1) {
         poster = poster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
@@ -13,14 +12,12 @@ window.createMovieCard = function(movie, index) {
     if (!poster) poster = 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
     
     var genres = movie.genres || [];
-
     var runtime = '';
-if (movie.mediaType === 'tv' && movie.seasons) {
-    runtime = movie.seasons + ' сез. | ' + (movie.episodes || '?') + ' эп.';
-} else if (movie.runtime) {
-    runtime = Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин';
-}
-
+    if (movie.mediaType === 'tv' && movie.seasons) {
+        runtime = movie.seasons + ' сез. | ' + (movie.episodes || '?') + ' эп.';
+    } else if (movie.runtime) {
+        runtime = Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин';
+    }
     var type = movie.mediaType === 'tv' ? '📺' : '🎬';
     
     var statusBadge = '';
@@ -59,6 +56,7 @@ if (movie.mediaType === 'tv' && movie.seasons) {
                 (movie.date ? '<small class="text-muted d-block">📅 ' + movie.date + '</small>' : '') +
                 '<div class="mt-auto d-flex gap-1 flex-wrap pt-1">' +
                     quickActions +
+                    '<button class="btn btn-sm btn-outline-secondary comment-btn" data-id="' + movie._firestoreId + '" data-type="movie" title="Комментарии"><i class="bi bi-chat-dots"></i></button>' +
                     '<button class="btn btn-sm btn-outline-info movie-detail-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-info-circle"></i></button>' +
                     '<button class="btn btn-sm btn-outline-warning movie-edit-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-pencil"></i></button>' +
                     '<button class="btn btn-sm btn-outline-danger movie-del-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-trash"></i></button>' +
@@ -69,7 +67,7 @@ if (movie.mediaType === 'tv' && movie.seasons) {
 };
 
 // ========== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ==========
-document.addEventListener('click', async (e) => {
+document.addEventListener('click', async function(e) {
     var markBtn = e.target.closest('.movie-mark-btn');
     if (markBtn) {
         var id = markBtn.dataset.id;
@@ -77,6 +75,10 @@ document.addEventListener('click', async (e) => {
         var updateData = { status: newStatus };
         if (newStatus === 'watched') updateData.date = new Date().toISOString().split('T')[0];
         await window.updateDoc(window.doc(window.db, window.getMoviesCollection(), id), updateData);
+        if (newStatus === 'watched') {
+            var m = window.moviesState.movies.find(function(x) { return x._firestoreId === id; });
+            if (m) window.logActivity('movie_watched', m.title, '');
+        }
         window.loadMovies();
         return;
     }
@@ -117,8 +119,15 @@ document.addEventListener('click', async (e) => {
             '<p><strong>Мой рейтинг:</strong> ' + window.renderStars(m.rating) + '</p>' +
             '<p><strong>Рецензия:</strong> ' + (m.review || '—') + '</p>' +
             '<p><strong>Смотрел с:</strong> ' + (m.watchedWith || '—') + '</p>' +
-            '<p><strong>Дата:</strong> ' + (m.date || '—') + '</p>';
+            '<p><strong>Дата:</strong> ' + (m.date || '—') + '</p>' +
+            '<button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.showComments(\'' + m._firestoreId + '\', \'movie\')"><i class="bi bi-chat-dots me-1"></i>Комментарии</button>';
         new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
+        return;
+    }
+    
+    var commentBtn = e.target.closest('.comment-btn');
+    if (commentBtn) {
+        window.showComments(commentBtn.dataset.id, commentBtn.dataset.type);
         return;
     }
 });
