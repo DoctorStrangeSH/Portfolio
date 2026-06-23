@@ -92,6 +92,22 @@ function renderMoviesCards(containerId, arr, emptyId) {
     });
 }
 
+// ========== ПЕРЕВОД (MyMemory API) ==========
+async function translateToEnglish(text) {
+    // Проверяем — если уже на английском, не переводим
+    if (/^[a-zA-Z0-9\s:.,!?\-]+$/.test(text)) return text;
+    
+    try {
+        var url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=ru|en';
+        var resp = await fetch(url);
+        var data = await resp.json();
+        if (data.responseStatus === 200) {
+            return data.responseData.translatedText;
+        }
+    } catch (e) {}
+    return text; // Если не получилось — возвращаем оригинал
+}
+
 // ========== ПОИСК ЧЕРЕЗ OMDb ==========
 async function searchOMDb(query) {
     if (!window.OMDB_API_KEY || window.OMDB_API_KEY === 'ВАШ_OMDB_КЛЮЧ') {
@@ -126,15 +142,24 @@ window.renderMoviesSection = function(container) {
             '<div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="moviesSearch" placeholder="Поиск..."></div></div>' +
             '<div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="moviesAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить фильм</button></div>' +
         '</div>' +
-        '<div id="omdbSearch" class="d-none mb-3"><div class="card"><div class="card-body"><h6><i class="bi bi-search me-2"></i>Результаты поиска</h6><div class="row g-2" id="omdbResults"></div><button class="btn btn-sm btn-outline-secondary mt-2" id="omdbClose">Закрыть</button></div></div></div>' +
+        '<div id="omdbSearch" class="d-none mb-3"><div class="card border-0 shadow-sm"><div class="card-body">' +
+            '<div class="d-flex justify-content-between align-items-center mb-2">' +
+                '<h6 class="mb-0"><i class="bi bi-search me-2"></i>Результаты поиска</h6>' +
+                '<button class="btn btn-sm btn-outline-secondary" id="omdbClose">✕</button>' +
+            '</div>' +
+            '<div class="alert alert-info small py-2 mb-2">' +
+                '<i class="bi bi-info-circle me-1"></i>Поиск работает по международной базе IMDb. Вводите названия на <strong>английском</strong> языке.' +
+            '</div>' +
+            '<div class="row g-2" id="omdbResults"></div>' +
+            '<div class="text-muted small mt-2" id="omdbTranslation"></div>' +
+        '</div></div></div>' +
         '<div id="moviesFilters" class="mb-3"></div>' +
         '<div class="row g-2 mb-3"><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="moviesAllCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="moviesWantCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посмотрел</small><strong id="moviesWatchedCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="moviesFavCount">0</strong></div></div></div>' +
         '<div class="row g-3" id="moviesContainer"></div>' +
         '<div id="moviesEmpty" class="text-center py-5 d-none"><i class="bi bi-film text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет фильмов</p></div>';
     
     document.getElementById('moviesAddBtn').addEventListener('click', function() {
-        var query = prompt('🔍 Введите название фильма:');
-        if (query) searchAndShowOMDb(query);
+        showSearchPrompt();
     });
     
     document.getElementById('omdbClose').addEventListener('click', function() {
@@ -150,23 +175,93 @@ window.renderMoviesSection = function(container) {
     loadMovies();
 };
 
+// ========== КРАСИВОЕ ОКНО ПОИСКА ==========
+function showSearchPrompt() {
+    var old = document.getElementById('movieSearchModal');
+    if (old) old.remove();
+    
+    document.body.insertAdjacentHTML('beforeend',
+        '<div class="modal fade" id="movieSearchModal" tabindex="-1">' +
+        '<div class="modal-dialog modal-dialog-centered">' +
+        '<div class="modal-content border-0 shadow">' +
+        '<div class="modal-header bg-primary text-white">' +
+            '<h5 class="modal-title"><i class="bi bi-search me-2"></i>Поиск фильма</h5>' +
+            '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+            '<div class="alert alert-info small mb-3">' +
+                '<i class="bi bi-info-circle-fill me-2"></i>' +
+                'Поиск работает по международной базе <strong>IMDb</strong>.<br>' +
+                'Вводите названия на <strong>английском</strong> языке.' +
+                '<div class="mt-1 text-muted">Например: Spider-Man, Interstellar, The Godfather</div>' +
+            '</div>' +
+            '<div class="input-group mb-3">' +
+                '<input type="text" class="form-control form-control-lg" id="searchQueryInput" placeholder="Название фильма...">' +
+                '<button class="btn btn-primary" id="searchQueryBtn"><i class="bi bi-search"></i></button>' +
+            '</div>' +
+            '<div id="searchTranslation" class="text-muted small mb-2 d-none"></div>' +
+        '</div>' +
+        '</div></div></div>');
+    
+    var modal = new bootstrap.Modal(document.getElementById('movieSearchModal'));
+    modal.show();
+    
+    document.getElementById('searchQueryBtn').addEventListener('click', async function() {
+        var query = document.getElementById('searchQueryInput').value.trim();
+        if (!query) return alert('Введите название!');
+        
+        // Если запрос на русском — переводим
+        if (/[а-яё]/i.test(query)) {
+            document.getElementById('searchTranslation').classList.remove('d-none');
+            document.getElementById('searchTranslation').innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Переводим...';
+            
+            var translated = await translateToEnglish(query);
+            
+            if (translated !== query) {
+                document.getElementById('searchTranslation').innerHTML = '🔤 Переведено: <strong>' + translated + '</strong>';
+                query = translated;
+            } else {
+                document.getElementById('searchTranslation').innerHTML = '⚠️ Не удалось перевести. Попробуйте ввести на английском.';
+                return;
+            }
+        }
+        
+        modal.hide();
+        searchAndShowOMDb(query);
+    });
+    
+    // Поиск по Enter
+    document.getElementById('searchQueryInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('searchQueryBtn').click();
+        }
+    });
+    
+    // Автофокус
+    setTimeout(function() {
+        document.getElementById('searchQueryInput').focus();
+    }, 500);
+}
+
 async function searchAndShowOMDb(query) {
     var results = await searchOMDb(query);
     var panel = document.getElementById('omdbSearch');
     var container = document.getElementById('omdbResults');
     
     if (!results || !results.length) {
-        alert('Ничего не найдено');
+        alert('Ничего не найдено. Попробуйте другое название.');
         return;
     }
     
     panel.classList.remove('d-none');
     container.innerHTML = results.slice(0, 6).map(function(f) {
         return '<div class="col-md-4 col-lg-2"><div class="card h-100" style="cursor:pointer" onclick="window.addMovieFromOMDb(\'' + f.imdbID + '\')">' +
-            '<img src="' + (f.Poster !== 'N/A' ? f.Poster : 'https://placehold.co/300x450?text=Нет+постера') + '" class="card-img-top" style="height:200px;object-fit:cover">' +
+            '<img src="' + (f.Poster !== 'N/A' ? f.Poster : 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера') + '" class="card-img-top" style="height:200px;object-fit:cover">' +
             '<div class="card-body p-2 text-center"><small class="fw-bold">' + f.Title + '</small><br><small class="text-muted">' + f.Year + '</small></div>' +
             '</div></div>';
     }).join('');
+    
+    panel.scrollIntoView({ behavior: 'smooth' });
 }
 
 window.addMovieFromOMDb = async function(imdbId) {
@@ -201,4 +296,4 @@ window.loadMovies = loadMovies;
 window.renderMoviesContent = renderMoviesContent;
 window.getMoviesCollection = getMoviesCollection;
 
-console.log('✅ moviesList.js загружен');
+console.log('✅ moviesList.js загружен (с переводом)');
