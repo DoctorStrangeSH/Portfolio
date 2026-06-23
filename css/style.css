@@ -361,6 +361,27 @@
     z-index: 1;
 }
 
+/* Профиль */
+#profileBody .card {
+    border-radius: 12px;
+}
+
+/* Лента активности */
+.feed-item {
+    transition: background 0.2s;
+}
+.feed-item:hover {
+    background: #e9ecef !important;
+}
+
+/* Кнопки в навигации */
+.navbar .btn-outline-light {
+    border-color: rgba(255,255,255,0.3);
+}
+.navbar .btn-outline-light:hover {
+    background: rgba(255,255,255,0.15);
+}
+
 /* Мобильная адаптация */
 @media (max-width: 768px) {
     .card-img-top { height: 150px; }
