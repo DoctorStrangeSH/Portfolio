@@ -85,9 +85,13 @@ async function loadProfileData(userId) {
             '<img src="' + userPhoto + '" class="rounded-circle mb-2" style="width:100px;height:100px;object-fit:cover;border:3px solid #0d6efd">' +
             '<h4 class="mb-1">' + userName + '</h4>' +
             '<p class="text-muted">' + userBio + '</p>' +
-            (isOwner ? '<button class="btn btn-sm btn-outline-primary" onclick="window.editProfile()"><i class="bi bi-pencil me-1"></i>Редактировать</button>' : '') +
-            '<button class="btn btn-sm btn-outline-success ms-1" onclick="window.showCollections()"><i class="bi bi-collection me-1"></i>Подборки</button>' +
-            '<button class="btn btn-sm btn-outline-info ms-1" onclick="window.showPublicMap(\'' + userId + '\')"><i class="bi bi-map me-1"></i>Карта</button>' +
+            '<div class="d-flex justify-content-center flex-wrap gap-1">' +
+                (isOwner ? '<button class="btn btn-sm btn-outline-primary" onclick="window.editProfile()"><i class="bi bi-pencil me-1"></i>Редактировать</button>' : '') +
+                '<button class="btn btn-sm btn-outline-success" onclick="window.showCollections()"><i class="bi bi-collection me-1"></i>Подборки</button>' +
+                '<button class="btn btn-sm btn-outline-info" onclick="window.showPublicMap(\'' + userId + '\')"><i class="bi bi-map me-1"></i>Карта</button>' +
+                (!isOwner ? '<button class="btn btn-sm btn-primary" onclick="window.switchToFriend(\'' + userId + '\', \'' + userName + '\')"><i class="bi bi-eye me-1"></i>Смотреть списки</button>' : '') +
+                (!isOwner ? '<button class="btn btn-sm btn-outline-secondary" onclick="window.showChat(\'' + [window.currentUser.uid, userId].sort().join('_') + '\', \'Чат с ' + userName.split(' ')[0] + '\')"><i class="bi bi-chat-dots me-1"></i>Чат</button>' : '') +
+            '</div>' +
         '</div>' +
         '<div class="row g-2 mb-3">' +
             '<div class="col-3"><div class="card text-center p-2"><div style="font-size:1.5rem">✈️</div><strong>' + places.length + '</strong><small class="text-muted d-block">Мест</small></div></div>' +
@@ -118,6 +122,32 @@ window.editProfile = function() {
     });
     
     window.showProfile(window.currentUser.uid);
+};
+
+// Переключиться на списки друга
+window.switchToFriend = function(uid, name) {
+    window.currentList = 'shared_' + uid;
+    window.currentFriendId = uid;
+    
+    // Закрываем профиль
+    var modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+    if (modal) modal.hide();
+    
+    // Переключаем на путешествия
+    document.querySelectorAll('#sectionMenu button').forEach(function(b) { b.classList.remove('active'); });
+    var travelBtn = document.querySelector('#sectionMenu button[data-section="travel"]');
+    if (travelBtn) {
+        travelBtn.classList.add('active');
+        window.currentSection = 'travel';
+        localStorage.setItem('currentSection', 'travel');
+        if (window.renderTravelSection) {
+            window.renderTravelSection(document.getElementById('sectionContainer'));
+        }
+    }
+    
+    // Обновляем фишки
+    if (window.renderAllFriends) window.renderAllFriends();
+    if (window.renderListChips) window.renderListChips();
 };
 
 console.log('✅ profile.js загружен');

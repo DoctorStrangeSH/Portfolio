@@ -77,21 +77,26 @@ function renderListChips() {
     
     var h = '<span class="list-chip ' + (window.currentList === 'my' ? 'active' : '') + '" data-list="my">🏠 Мои</span>';
     
-    window.friends.forEach(function(f) {
-        var listId = 'shared_' + f.uid;
-        h += '<span class="list-chip ' + (window.currentList === listId ? 'active' : '') + '" data-list="' + listId + '" data-friend-uid="' + f.uid + '">';
-        h += '❤️ ' + (f.name || '?').split(' ')[0] + ' ';
-        h += '<span class="friend-actions" style="font-size:0.8rem">';
-        h += '<span onclick="event.stopPropagation();window.showProfile(\'' + f.uid + '\')" style="cursor:pointer" title="Профиль">👤</span> ';
-        h += '<span onclick="event.stopPropagation();window.showChat(\'' + [window.currentUser.uid, f.uid].sort().join('_') + '\', \'Чат с ' + (f.name || '?').split(' ')[0] + '\')" style="cursor:pointer" title="Чат">💬</span>';
-        h += '</span></span>';
-    });
+    if (window.friends.length > 0) {
+        h += '<div class="dropdown d-inline-block">';
+        h += '<span class="list-chip dropdown-toggle" data-bs-toggle="dropdown" style="cursor:pointer">❤️ Совместно</span>';
+        h += '<div class="dropdown-menu">';
+        window.friends.forEach(function(f) {
+            var listId = 'shared_' + f.uid;
+            h += '<a class="dropdown-item ' + (window.currentList === listId ? 'active' : '') + '" href="#" data-list="' + listId + '" data-friend-uid="' + f.uid + '" data-friend-name="' + f.name + '">';
+            h += '❤️ ' + (f.name || 'Друг') + ' <span class="float-end" onclick="event.stopPropagation();event.preventDefault();window.showProfile(\'' + f.uid + '\')" title="Профиль">👤</span>';
+            h += ' <span class="float-end me-2" onclick="event.stopPropagation();event.preventDefault();window.showChat(\'' + [window.currentUser.uid, f.uid].sort().join('_') + '\', \'Чат с ' + (f.name || '?').split(' ')[0] + '\')" title="Чат">💬</span>';
+            h += '</a>';
+        });
+        h += '</div></div>';
+    }
     
     c.innerHTML = h;
     
-    c.querySelectorAll('.list-chip').forEach(function(chip) {
+    c.querySelectorAll('.list-chip[data-list], .dropdown-item[data-list]').forEach(function(chip) {
         chip.addEventListener('click', function(e) {
-            if (e.target.closest('.friend-actions')) return;
+            if (e.target.closest('[onclick]')) return;
+            e.preventDefault();
             window.currentList = chip.dataset.list;
             window.currentFriendId = chip.dataset.friendUid || null;
             renderAllFriends();
@@ -99,6 +104,7 @@ function renderListChips() {
         });
     });
 }
+
 
 function reloadAllLists() {
     if (window.loadTravelPlaces) window.loadTravelPlaces();
@@ -301,5 +307,9 @@ document.getElementById('copyIdBtn').addEventListener('click', function() {
     navigator.clipboard.writeText(window.currentUser.uid);
     alert('✅ ID скопирован!');
 });
+
+window.renderAllFriends = function() {
+    renderAllFriends();
+};
 
 console.log('✅ friends.js v11 загружен');
