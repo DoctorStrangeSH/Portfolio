@@ -1,46 +1,55 @@
 // ==================== moviesCards.js ====================
 
 window.createMovieCard = function(movie, index) {
-    const col = document.createElement('div');
+    var col = document.createElement('div');
     col.className = 'col-md-6 col-lg-3 fade-in-up';
-    col.style.animationDelay = `${index * 0.03}s`;
+    col.style.animationDelay = (index * 0.03) + 's';
     
-    const poster = movie.poster || 'https://placehold.co/300x450/1a1a2e/eee?text=🎬';
-    const genres = movie.genres || [];
-    const runtime = movie.runtime ? `${Math.floor(movie.runtime/60)}ч ${movie.runtime%60}мин` : '';
+    var poster = movie.poster || 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
+    var genres = movie.genres || [];
+    var runtime = movie.runtime ? Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин' : '';
+    var type = movie.mediaType === 'tv' ? '📺' : '🎬';
     
-    let statusBadge = '';
-    if (movie.status==='favourite') statusBadge='<span class="visit-again-badge">⭐ Любимый</span>';
-    else if (movie.status==='dislike') statusBadge='<span class="visit-again-badge" style="background:rgba(220,53,69,0.9)">👎 Не понравился</span>';
+    var statusBadge = '';
+    if (movie.status === 'favourite') statusBadge = '<span class="visit-again-badge">⭐ Любимое</span>';
+    else if (movie.status === 'dislike') statusBadge = '<span class="visit-again-badge" style="background:rgba(220,53,69,0.9)">👎 Не понравилось</span>';
     
-    let quickActions = '';
-    if (movie.status==='want') quickActions=`<button class="btn btn-sm btn-outline-success movie-mark-btn" data-id="${movie._firestoreId}" data-status="watched"><i class="bi bi-check-lg"></i></button><button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="${movie._firestoreId}" data-status="favourite"><i class="bi bi-star"></i></button><button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="${movie._firestoreId}" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>`;
-    else if (movie.status==='watched') quickActions=`<button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="${movie._firestoreId}" data-status="favourite"><i class="bi bi-star"></i></button><button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="${movie._firestoreId}" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>`;
-    else quickActions=`<button class="btn btn-sm btn-outline-secondary movie-mark-btn" data-id="${movie._firestoreId}" data-status="watched"><i class="bi bi-arrow-repeat"></i></button>`;
+    var quickActions = '';
+    if (movie.status === 'want') {
+        quickActions = 
+            '<button class="btn btn-sm btn-outline-success movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched"><i class="bi bi-check-lg"></i></button>' +
+            '<button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite"><i class="bi bi-star"></i></button>' +
+            '<button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>';
+    } else if (movie.status === 'watched') {
+        quickActions = 
+            '<button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite"><i class="bi bi-star"></i></button>' +
+            '<button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>';
+    } else {
+        quickActions = '<button class="btn btn-sm btn-outline-secondary movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched"><i class="bi bi-arrow-repeat"></i></button>';
+    }
     
-    col.innerHTML = `
-        <div class="card h-100 shadow-sm movie-card mb-3 border-0 overflow-hidden">
-            ${statusBadge}
-            <div class="position-relative">
-                <img src="${poster}" class="card-img-top" alt="${movie.title}" style="height:300px;object-fit:cover">
-                <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.8));pointer-events:none"></div>
-            </div>
-            <div class="card-body d-flex flex-column p-2">
-                <h6 class="card-title mb-1" style="font-size:0.9rem">${movie.title}</h6>
-                <div class="d-flex justify-content-between align-items-center mb-1"><small class="text-muted">${movie.year||'—'}</small><small>${window.renderStars(movie.rating)}</small></div>
-                ${movie.kpRating ? `<small class="text-muted">КП: ${movie.kpRating}</small>` : ''}
-                ${genres.length>0?`<div class="d-flex flex-wrap gap-1 mb-1">${genres.slice(0,2).map(g=>`<span class="badge bg-light text-secondary" style="font-size:0.6rem">${g}</span>`).join('')}</div>`:''}
-                ${runtime?`<small class="text-muted d-block">⏱️ ${runtime}</small>`:''}
-                ${movie.watchedWith?`<small class="text-muted d-block">👤 ${movie.watchedWith}</small>`:''}
-                ${movie.date?`<small class="text-muted d-block">📅 ${movie.date}</small>`:''}
-                <div class="mt-auto d-flex gap-1 flex-wrap pt-1">
-                    ${quickActions}
-                    <button class="btn btn-sm btn-outline-info movie-detail-btn" data-id="${movie._firestoreId}"><i class="bi bi-info-circle"></i></button>
-                    <button class="btn btn-sm btn-outline-warning movie-edit-btn" data-id="${movie._firestoreId}"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger movie-del-btn" data-id="${movie._firestoreId}"><i class="bi bi-trash"></i></button>
-                </div>
-            </div>
-        </div>`;
+    col.innerHTML = 
+        '<div class="card h-100 shadow-sm movie-card mb-3 border-0 overflow-hidden">' +
+            statusBadge +
+            '<div class="position-relative">' +
+                '<img src="' + poster + '" class="card-img-top" alt="' + movie.title + '" style="height:300px;object-fit:cover">' +
+                '<span class="position-absolute badge bg-dark bg-opacity-50" style="top:8px;right:8px;z-index:3">' + type + '</span>' +
+                '<div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.8));pointer-events:none"></div>' +
+            '</div>' +
+            '<div class="card-body d-flex flex-column p-2">' +
+                '<h6 class="card-title mb-1" style="font-size:0.9rem">' + movie.title + '</h6>' +
+                '<div class="d-flex justify-content-between align-items-center mb-1"><small class="text-muted">' + (movie.year || '—') + '</small><small>' + window.renderStars(movie.rating) + '</small></div>' +
+                (movie.tmdbRating ? '<small class="text-muted">TMDB: ' + movie.tmdbRating + '</small>' : '') +
+                (genres.length > 0 ? '<div class="d-flex flex-wrap gap-1 mb-1">' + genres.slice(0,2).map(function(g) { return '<span class="badge bg-light text-secondary" style="font-size:0.6rem">' + g + '</span>'; }).join('') + '</div>' : '') +
+                (runtime ? '<small class="text-muted d-block">⏱️ ' + runtime + '</small>' : '') +
+                '<div class="mt-auto d-flex gap-1 flex-wrap pt-1">' +
+                    quickActions +
+                    '<button class="btn btn-sm btn-outline-info movie-detail-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-info-circle"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-warning movie-edit-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-danger movie-del-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-trash"></i></button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
     return col;
 };
 
