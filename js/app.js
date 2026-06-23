@@ -20,6 +20,7 @@ window.initApp = async function() {
         await import('./dreams/dreamsList.js');
         
         if (window.loadFriends) await window.loadFriends();
+        if (window.listenUnreadMessages) window.listenUnreadMessages();
         if (window.listenFriends) window.listenFriends();
         
         document.querySelectorAll('#sectionMenu button[data-section]').forEach(function(btn) {
@@ -67,6 +68,9 @@ function loadCurrentSection() {
         case 'dreams':
             if (window.renderDreamsSection) window.renderDreamsSection(container);
             else container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки мечт</p>';
+            break;
+            case 'shared':
+            if (window.renderSharedSection) window.renderSharedSection(container);
             break;
         default:
             container.innerHTML = '<p class="text-center text-muted py-5">Скоро...</p>';

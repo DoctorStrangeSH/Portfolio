@@ -76,22 +76,23 @@
                     <button class="btn btn-outline-light btn-sm" onclick="window.showProfile()" title="Профиль"><i class="bi bi-person-circle"></i></button>
                     <button class="btn btn-outline-light btn-sm" onclick="window.showPlanTrip()" title="Планировать поездку"><i class="bi bi-calendar-plus"></i></button>
                     <button class="btn btn-outline-light btn-sm" onclick="window.showCollections()" title="Подборки"><i class="bi bi-collection"></i></button>
-                    <button class="btn btn-outline-light btn-sm position-relative" data-bs-toggle="modal" data-bs-target="#friendsModal">
-                        <i class="bi bi-people-fill me-1"></i>Друзья
-                        <span id="friendsBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.6rem">0</span>
-                    </button>
+<button class="btn btn-outline-light btn-sm position-relative" onclick="window.showMessenger()" title="Сообщения">
+    <i class="bi bi-chat-dots"></i>
+    <span id="messagesBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size:0.6rem">0</span>
+</button>
                     <button id="logoutBtn" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i></button>
                 </div>
             </div>
         </nav>
         <div class="bg-white border-bottom shadow-sm">
             <div class="container">
-                <ul class="nav nav-pills py-2 flex-nowrap overflow-auto" id="sectionMenu">
-                    <li class="nav-item"><button class="nav-link active" data-section="travel"><i class="bi bi-airplane me-1"></i>Путешествия</button></li>
-                    <li class="nav-item"><button class="nav-link" data-section="food"><i class="bi bi-cup-hot me-1"></i>Рестораны</button></li>
-                    <li class="nav-item"><button class="nav-link" data-section="movies"><i class="bi bi-film me-1"></i>Кино</button></li>
-                    <li class="nav-item"><button class="nav-link" data-section="dreams"><i class="bi bi-star me-1"></i>Мечты</button></li>
-                </ul>
+<ul class="nav nav-pills py-2 flex-nowrap overflow-auto" id="sectionMenu">
+    <li class="nav-item"><button class="nav-link active" data-section="travel"><i class="bi bi-airplane me-1"></i>Путешествия</button></li>
+    <li class="nav-item"><button class="nav-link" data-section="food"><i class="bi bi-cup-hot me-1"></i>Рестораны</button></li>
+    <li class="nav-item"><button class="nav-link" data-section="movies"><i class="bi bi-film me-1"></i>Кино</button></li>
+    <li class="nav-item"><button class="nav-link" data-section="dreams"><i class="bi bi-star me-1"></i>Мечты</button></li>
+    <li class="nav-item"><button class="nav-link" data-section="shared"><i class="bi bi-people me-1"></i>Совместно</button></li>
+</ul>
             </div>
         </div>
         <div id="sectionContainer" class="container py-3"></div>
@@ -180,6 +181,8 @@
         await import('./js/social/chat.js');
         await import('./js/social/planTrip.js');
         await import('./js/app.js');
+        await import('./js/social/shared.js');
+        await import('./js/social/messenger.js');
         
         console.log('✅ Все модули загружены');
         
