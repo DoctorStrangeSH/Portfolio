@@ -4,7 +4,6 @@ window.currentSection = localStorage.getItem('currentSection') || 'travel';
 
 window.initApp = async function() {
     try {
-        // Загружаем модули
         await import('./travel/travelCards.js');
         await import('./travel/travelMap.js');
         await import('./travel/travelForm.js');
@@ -14,15 +13,19 @@ window.initApp = async function() {
         await import('./food/foodForm.js');
         await import('./food/foodList.js');
         
-        // Друзья
+        await import('./movies/moviesCards.js');
+        await import('./movies/moviesList.js');
+        
+        await import('./dreams/dreamsCards.js');
+        await import('./dreams/dreamsList.js');
+        
         if (window.loadFriends) await window.loadFriends();
         if (window.listenFriends) window.listenFriends();
         
-        // Меню разделов
-        document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
-            btn.addEventListener('click', () => {
+        document.querySelectorAll('#sectionMenu button[data-section]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
                 if (btn.classList.contains('disabled')) return;
-                document.querySelectorAll('#sectionMenu button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#sectionMenu button').forEach(function(b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 window.currentSection = btn.dataset.section;
                 localStorage.setItem('currentSection', window.currentSection);
@@ -30,12 +33,10 @@ window.initApp = async function() {
             });
         });
         
-        // Активируем нужную кнопку
-        document.querySelectorAll('#sectionMenu button[data-section]').forEach(btn => {
+        document.querySelectorAll('#sectionMenu button[data-section]').forEach(function(btn) {
             btn.classList.toggle('active', btn.dataset.section === window.currentSection);
         });
         
-        // Загружаем раздел
         loadCurrentSection();
         
         console.log('✅ Приложение готово (раздел: ' + window.currentSection + ')');
@@ -45,31 +46,27 @@ window.initApp = async function() {
 };
 
 function loadCurrentSection() {
-    const container = document.getElementById('sectionContainer');
+    var container = document.getElementById('sectionContainer');
     if (!container) return;
     
     console.log('📂 Загружаем раздел:', window.currentSection);
     
     switch (window.currentSection) {
         case 'travel':
-            if (window.renderTravelSection) {
-                window.renderTravelSection(container);
-            } else {
-                container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки путешествий</p>';
-            }
+            if (window.renderTravelSection) window.renderTravelSection(container);
+            else container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки путешествий</p>';
             break;
         case 'food':
-            if (window.renderFoodSection) {
-                window.renderFoodSection(container);
-            } else {
-                container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки ресторанов</p>';
-            }
+            if (window.renderFoodSection) window.renderFoodSection(container);
+            else container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки ресторанов</p>';
             break;
         case 'movies':
             if (window.renderMoviesSection) window.renderMoviesSection(container);
+            else container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки кино</p>';
             break;
         case 'dreams':
-             if (window.renderDreamsSection) window.renderDreamsSection(container);
+            if (window.renderDreamsSection) window.renderDreamsSection(container);
+            else container.innerHTML = '<p class="text-center text-danger py-5">Ошибка загрузки мечт</p>';
             break;
         default:
             container.innerHTML = '<p class="text-center text-muted py-5">Скоро...</p>';
