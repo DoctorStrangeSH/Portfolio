@@ -1,4 +1,4 @@
-// ==================== friends.js v10 ====================
+// ==================== friends.js v11 ====================
 const db = window.db;
 
 window.friends = [];
@@ -11,23 +11,23 @@ window.loadFriends = async function () {
     if (!window.currentUser) return;
     var uid = window.currentUser.uid;
     try {
-        var userSnap = await window.getDoc(window.doc(db, 'users', uid));
-        if (userSnap.exists()) {
-            window.friends = userSnap.data().friends || [];
-        } else {
-            await window.setDoc(window.doc(db, 'users', uid), {
-                name: window.currentUser.displayName || 'Пользователь',
-                email: window.currentUser.email || '',
-                friends: [],
-                createdAt: Date.now()
-            });
-            window.friends = [];
-        }
+        // Загружаем дружбы где я участник
+        var snap1 = await window.getDocs(window.collection(db, 'friendships'));
+        window.friends = [];
+        snap1.forEach(function(doc) {
+            var data = doc.data();
+            if (data.user1 === uid || data.user2 === uid) {
+                var friendUid = data.user1 === uid ? data.user2 : data.user1;
+                var friendName = data.user1 === uid ? data.name2 : data.name1;
+                window.friends.push({ uid: friendUid, name: friendName, addedAt: data.createdAt });
+            }
+        });
         
-        var snap = await window.getDocs(window.collection(db, 'friendRequests'));
+        // Загружаем заявки
+        var snap2 = await window.getDocs(window.collection(db, 'friendRequests'));
         window.incomingRequests = [];
         window.outgoingRequests = [];
-        snap.forEach(function(doc) {
+        snap2.forEach(function(doc) {
             var data = doc.data();
             data.id = doc.id;
             if (data.toUid === uid && data.status === 'pending') window.incomingRequests.push(data);
@@ -39,14 +39,12 @@ window.loadFriends = async function () {
     } catch (e) { console.error('loadFriends error:', e); }
 };
 
-// Проверка: является ли пользователь другом
 window.isFriend = function(uid) {
     if (!window.friends || !window.currentUser) return false;
     if (uid === window.currentUser.uid) return true;
     return window.friends.some(function(f) { return f.uid === uid; });
 };
 
-// Добавить друга по ID (из профиля)
 window.addFriendById = function(uid) {
     var input = document.getElementById('friendIdInput');
     if (input) input.value = uid;
@@ -150,7 +148,7 @@ function renderFriendsModal() {
                 return '<div class="friend-item">' +
                     '<div class="d-flex align-items-center gap-2">' +
                         '<div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.8rem">' + (f.name || '?').charAt(0).toUpperCase() + '</div>' +
-                        '<div><strong>' + f.name + '</strong><br><small class="text-muted" style="font-size:0.7rem">Друзья с ' + new Date(f.addedAt).toLocaleDateString() + '</small></div>' +
+                        '<div><strong>' + f.name + '</strong></div>' +
                     '</div>' +
                     '<div class="d-flex gap-1">' +
                         '<button class="btn btn-sm btn-outline-info view-friend-btn" data-uid="' + f.uid + '" title="Профиль"><i class="bi bi-person"></i></button>' +
@@ -232,27 +230,14 @@ async function acceptRequest(requestId) {
         return;
     }
     
-    // Добавляю друга себе
-    var myRef = window.doc(db, 'users', myUid);
-    var myNewFriends = window.friends.filter(function(f) { return f.uid !== friendUid; });
-    myNewFriends.push({ uid: friendUid, name: friendName, addedAt: Date.now() });
-    await window.updateDoc(myRef, { friends: myNewFriends });
-    
-    // Добавляю себя другу
-    var friendRef = window.doc(db, 'users', friendUid);
-    var friendSnap = await window.getDoc(friendRef);
-    if (friendSnap.exists()) {
-        var friendData = friendSnap.data();
-        var friendNewFriends = (friendData.friends || []).filter(function(f) { return f.uid !== myUid; });
-        friendNewFriends.push({ uid: myUid, name: myName, addedAt: Date.now() });
-        await window.updateDoc(friendRef, { friends: friendNewFriends });
-    } else {
-        await window.setDoc(friendRef, {
-            name: friendName,
-            friends: [{ uid: myUid, name: myName, addedAt: Date.now() }],
-            createdAt: Date.now()
-        });
-    }
+    // Создаём дружбу в отдельной коллекции
+    await window.addDoc(window.collection(db, 'friendships'), {
+        user1: myUid,
+        name1: myName,
+        user2: friendUid,
+        name2: friendName,
+        createdAt: Date.now()
+    });
     
     // Удаляем заявку
     await window.deleteDoc(window.doc(db, 'friendRequests', requestId));
@@ -277,17 +262,15 @@ async function cancelRequest(requestId) {
 async function removeFriend(friendUid) {
     if (!confirm('Удалить из друзей?')) return;
     
-    await window.updateDoc(window.doc(db, 'users', window.currentUser.uid), {
-        friends: window.friends.filter(function(f) { return f.uid !== friendUid; })
+    // Находим и удаляем дружбу
+    var snap = await window.getDocs(window.collection(db, 'friendships'));
+    snap.forEach(async function(doc) {
+        var data = doc.data();
+        if ((data.user1 === window.currentUser.uid && data.user2 === friendUid) ||
+            (data.user2 === window.currentUser.uid && data.user1 === friendUid)) {
+            await window.deleteDoc(window.doc(db, 'friendships', doc.id));
+        }
     });
-    
-    var friendRef = window.doc(db, 'users', friendUid);
-    var friendSnap = await window.getDoc(friendRef);
-    if (friendSnap.exists()) {
-        await window.updateDoc(friendRef, {
-            friends: (friendSnap.data().friends || []).filter(function(f) { return f.uid !== window.currentUser.uid; })
-        });
-    }
     
     if (window.currentList === 'shared_' + friendUid) {
         window.currentList = 'my';
@@ -300,11 +283,8 @@ async function removeFriend(friendUid) {
 
 window.listenFriends = function() {
     if (!window.currentUser) return;
-    window.onSnapshot(window.doc(db, 'users', window.currentUser.uid), function(snap) {
-        if (snap.exists()) {
-            window.friends = snap.data().friends || [];
-            renderAllFriends();
-        }
+    window.onSnapshot(window.collection(db, 'friendships'), function() {
+        if (window.loadFriends) window.loadFriends();
     });
     window.onSnapshot(window.collection(db, 'friendRequests'), function() {
         if (window.loadFriends) window.loadFriends();
@@ -322,4 +302,4 @@ document.getElementById('copyIdBtn').addEventListener('click', function() {
     alert('✅ ID скопирован!');
 });
 
-console.log('✅ friends.js v10 загружен');
+console.log('✅ friends.js v11 загружен');
