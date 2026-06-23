@@ -100,7 +100,7 @@ async function searchTMDB(query) {
         return [];
     }
     
-    var url = window.TMDB_PROXY_URL + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
+    var url = window.TMDB_PROXY_URL.replace(/\/$/, '') + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
     
     console.log('🔍 Ищем:', url);  // ← ВРЕМЕННО
     
@@ -118,7 +118,7 @@ async function searchTMDB(query) {
 
 async function getTMDBDetails(movieId) {
     try {
-        var url = window.TMDB_PROXY_URL + '/proxy/movie/' + movieId + '?language=ru-RU&append_to_response=credits';
+        var url = window.TMDB_PROXY_URL.replace(/\/$/, '') + '/proxy/movie/' + movieId + '?language=ru-RU&append_to_response=credits';
         var resp = await fetch(url);
         return await resp.json();
     } catch (e) { return null; }
