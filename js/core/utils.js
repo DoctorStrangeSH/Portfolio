@@ -62,4 +62,22 @@ window.MOVIE_STATUSES = {
     dislike: '👎 Не понравилось'
 };
 
+// Категории мечт
+window.DREAM_CATEGORIES = {
+    travel: { emoji: '✈️', name: 'Путешествие', color: '#0d6efd' },
+    purchase: { emoji: '🛍️', name: 'Покупка', color: '#198754' },
+    skill: { emoji: '🎯', name: 'Навык', color: '#ffc107' },
+    career: { emoji: '💼', name: 'Карьера', color: '#6f42c1' },
+    health: { emoji: '💪', name: 'Здоровье', color: '#dc3545' },
+    event: { emoji: '🎉', name: 'Событие', color: '#fd7e14' },
+    other: { emoji: '✨', name: 'Другое', color: '#6c757d' }
+};
+
+window.DREAM_STATUSES = {
+    dreaming: { emoji: '💭', name: 'Мечтаю', color: '#6c757d' },
+    planning: { emoji: '📋', name: 'Планирую', color: '#0d6efd' },
+    doing: { emoji: '🚀', name: 'Делаю', color: '#fd7e14' },
+    done: { emoji: '✅', name: 'Сделал!', color: '#198754' }
+};
+
 console.log('✅ utils.js загружен');
