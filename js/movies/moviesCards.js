@@ -13,7 +13,14 @@ window.createMovieCard = function(movie, index) {
     if (!poster) poster = 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
     
     var genres = movie.genres || [];
-    var runtime = movie.runtime ? Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин' : '';
+
+    var runtime = '';
+if (movie.mediaType === 'tv' && movie.seasons) {
+    runtime = movie.seasons + ' сез. | ' + (movie.episodes || '?') + ' эп.';
+} else if (movie.runtime) {
+    runtime = Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин';
+}
+
     var type = movie.mediaType === 'tv' ? '📺' : '🎬';
     
     var statusBadge = '';
