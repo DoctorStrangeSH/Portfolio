@@ -5,7 +5,13 @@ window.createMovieCard = function(movie, index) {
     col.className = 'col-md-6 col-lg-3 fade-in-up';
     col.style.animationDelay = (index * 0.03) + 's';
     
-    var poster = movie.poster || 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
+    // Прокси для картинок
+    var poster = movie.poster;
+    if (poster && poster.indexOf('image.tmdb.org') !== -1) {
+        poster = poster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
+    }
+    if (!poster) poster = 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
+    
     var genres = movie.genres || [];
     var runtime = movie.runtime ? Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин' : '';
     var type = movie.mediaType === 'tv' ? '📺' : '🎬';
@@ -42,6 +48,8 @@ window.createMovieCard = function(movie, index) {
                 (movie.tmdbRating ? '<small class="text-muted">TMDB: ' + movie.tmdbRating + '</small>' : '') +
                 (genres.length > 0 ? '<div class="d-flex flex-wrap gap-1 mb-1">' + genres.slice(0,2).map(function(g) { return '<span class="badge bg-light text-secondary" style="font-size:0.6rem">' + g + '</span>'; }).join('') + '</div>' : '') +
                 (runtime ? '<small class="text-muted d-block">⏱️ ' + runtime + '</small>' : '') +
+                (movie.watchedWith ? '<small class="text-muted d-block">👤 ' + movie.watchedWith + '</small>' : '') +
+                (movie.date ? '<small class="text-muted d-block">📅 ' + movie.date + '</small>' : '') +
                 '<div class="mt-auto d-flex gap-1 flex-wrap pt-1">' +
                     quickActions +
                     '<button class="btn btn-sm btn-outline-info movie-detail-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-info-circle"></i></button>' +
@@ -55,50 +63,54 @@ window.createMovieCard = function(movie, index) {
 
 // ========== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ==========
 document.addEventListener('click', async (e) => {
-    const markBtn = e.target.closest('.movie-mark-btn');
+    var markBtn = e.target.closest('.movie-mark-btn');
     if (markBtn) {
-        const id = markBtn.dataset.id;
-        const newStatus = markBtn.dataset.status;
-        const updateData = { status: newStatus };
+        var id = markBtn.dataset.id;
+        var newStatus = markBtn.dataset.status;
+        var updateData = { status: newStatus };
         if (newStatus === 'watched') updateData.date = new Date().toISOString().split('T')[0];
         await window.updateDoc(window.doc(window.db, window.getMoviesCollection(), id), updateData);
         window.loadMovies();
         return;
     }
     
-    const editBtn = e.target.closest('.movie-edit-btn');
+    var editBtn = e.target.closest('.movie-edit-btn');
     if (editBtn) {
-        const m = window.moviesState.movies.find(x=>x._firestoreId===editBtn.dataset.id);
+        var m = window.moviesState.movies.find(function(x) { return x._firestoreId === editBtn.dataset.id; });
         if (m) showMovieEditModal(m);
         return;
     }
     
-    const delBtn = e.target.closest('.movie-del-btn');
+    var delBtn = e.target.closest('.movie-del-btn');
     if (delBtn) {
-        const m = window.moviesState.movies.find(x=>x._firestoreId===delBtn.dataset.id);
-        if (!confirm(`Удалить "${m?.title||'фильм'}"?`)) return;
+        var m = window.moviesState.movies.find(function(x) { return x._firestoreId === delBtn.dataset.id; });
+        if (!confirm('Удалить "' + (m ? m.title : 'фильм') + '"?')) return;
         await window.deleteDoc(window.doc(window.db, window.getMoviesCollection(), delBtn.dataset.id));
         window.loadMovies();
         return;
     }
     
-    const detailBtn = e.target.closest('.movie-detail-btn');
+    var detailBtn = e.target.closest('.movie-detail-btn');
     if (detailBtn) {
-        const m = window.moviesState.movies.find(x=>x._firestoreId===detailBtn.dataset.id);
+        var m = window.moviesState.movies.find(function(x) { return x._firestoreId === detailBtn.dataset.id; });
         if (!m) return;
+        var detPoster = m.poster;
+        if (detPoster && detPoster.indexOf('image.tmdb.org') !== -1) {
+            detPoster = detPoster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
+        }
         document.getElementById('detailTitle').textContent = '🎬 ' + m.title;
-        document.getElementById('detailBody').innerHTML = `
-            ${m.poster?`<img src="${m.poster}" class="rounded mb-3" style="max-height:300px">`:''}
-            <p><strong>Год:</strong> ${m.year||'—'} | <strong>КП:</strong> ${m.kpRating||'—'}</p>
-            <p><strong>Жанры:</strong> ${(m.genres||[]).join(', ')||'—'}</p>
-            <p><strong>Длительность:</strong> ${m.runtime?`${Math.floor(m.runtime/60)}ч ${m.runtime%60}мин`:'—'}</p>
-            <p><strong>Страна:</strong> ${(m.countries||[]).join(', ')||'—'}</p>
-            <p><strong>Слоган:</strong> ${m.slogan||'—'}</p>
-            <p><strong>Описание:</strong> ${m.overview||'—'}</p>
-            <p><strong>Мой рейтинг:</strong> ${window.renderStars(m.rating)}</p>
-            <p><strong>Рецензия:</strong> ${m.review||'—'}</p>
-            <p><strong>Смотрел с:</strong> ${m.watchedWith||'—'}</p>
-            <p><strong>Дата:</strong> ${m.date||'—'}</p>`;
+        document.getElementById('detailBody').innerHTML = 
+            (detPoster ? '<img src="' + detPoster + '" class="rounded mb-3" style="max-height:300px">' : '') +
+            '<p><strong>Год:</strong> ' + (m.year || '—') + ' | <strong>TMDB:</strong> ' + (m.tmdbRating || '—') + '</p>' +
+            '<p><strong>Жанры:</strong> ' + ((m.genres || []).join(', ') || '—') + '</p>' +
+            '<p><strong>Длительность:</strong> ' + (m.runtime ? Math.floor(m.runtime/60) + 'ч ' + (m.runtime%60) + 'мин' : '—') + '</p>' +
+            '<p><strong>Страна:</strong> ' + ((m.countries || []).join(', ') || '—') + '</p>' +
+            '<p><strong>Слоган:</strong> ' + (m.tagline || '—') + '</p>' +
+            '<p><strong>Описание:</strong> ' + (m.overview || '—') + '</p>' +
+            '<p><strong>Мой рейтинг:</strong> ' + window.renderStars(m.rating) + '</p>' +
+            '<p><strong>Рецензия:</strong> ' + (m.review || '—') + '</p>' +
+            '<p><strong>Смотрел с:</strong> ' + (m.watchedWith || '—') + '</p>' +
+            '<p><strong>Дата:</strong> ' + (m.date || '—') + '</p>';
         new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
         return;
     }
@@ -106,26 +118,24 @@ document.addEventListener('click', async (e) => {
 
 // ========== МОДАЛКА РЕДАКТИРОВАНИЯ ==========
 function showMovieEditModal(movie) {
-    const old = document.getElementById('movieEditModal');
+    var old = document.getElementById('movieEditModal');
     if (old) old.remove();
-    document.body.insertAdjacentHTML('beforeend', `
-        <div class="modal fade" id="movieEditModal" tabindex="-1">
-            <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow">
-                <div class="modal-header bg-light"><h5 class="modal-title">✏️ Редактировать</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body"><form id="movieEditForm" autocomplete="off">
-                    <div class="row g-3 mb-3"><div class="col-md-8"><label class="form-label">Название</label><input type="text" class="form-control" id="meTitle" value="${movie.title||''}"></div><div class="col-md-4"><label class="form-label">Год</label><input type="text" class="form-control" id="meYear" value="${movie.year||''}"></div></div>
-                    <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Мой рейтинг</label><div class="d-flex gap-1" id="meStars"></div></div><div class="col-md-6"><label class="form-label">Статус</label><select class="form-select" id="meStatus"><option value="want" ${movie.status==='want'?'selected':''}>🔖 Хочу</option><option value="watched" ${movie.status==='watched'?'selected':''}>✅ Посмотрел</option><option value="favourite" ${movie.status==='favourite'?'selected':''}>⭐ Любимое</option><option value="dislike" ${movie.status==='dislike'?'selected':''}>👎 Не понравилось</option></select></div></div>
-                    <div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label">С кем</label><input type="text" class="form-control" id="meWatchedWith" value="${movie.watchedWith||''}"></div><div class="col-md-4"><label class="form-label">Дата</label><input type="date" class="form-control" id="meDate" value="${movie.date||''}"></div><div class="col-md-4"><label class="form-label">Длительность</label><input type="number" class="form-control" id="meRuntime" value="${movie.runtime||''}"></div></div>
-                    <div class="mb-3"><label class="form-label">Рецензия</label><textarea class="form-control" id="meReview" rows="3">${movie.review||''}</textarea></div>
-                    <div class="d-flex gap-2"><button type="submit" class="btn btn-success flex-grow-1">💾 Сохранить</button><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button></div>
-                </form></div>
-            </div></div>
-        </div>`);
+    document.body.insertAdjacentHTML('beforeend', 
+        '<div class="modal fade" id="movieEditModal" tabindex="-1">' +
+        '<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow">' +
+        '<div class="modal-header bg-light"><h5 class="modal-title">✏️ Редактировать</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>' +
+        '<div class="modal-body"><form id="movieEditForm" autocomplete="off">' +
+            '<div class="row g-3 mb-3"><div class="col-md-8"><label class="form-label">Название</label><input type="text" class="form-control" id="meTitle" value="' + (movie.title || '') + '"></div><div class="col-md-4"><label class="form-label">Год</label><input type="text" class="form-control" id="meYear" value="' + (movie.year || '') + '"></div></div>' +
+            '<div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Мой рейтинг</label><div class="d-flex gap-1" id="meStars"></div></div><div class="col-md-6"><label class="form-label">Статус</label><select class="form-select" id="meStatus"><option value="want" ' + (movie.status === 'want' ? 'selected' : '') + '>🔖 Хочу</option><option value="watched" ' + (movie.status === 'watched' ? 'selected' : '') + '>✅ Посмотрел</option><option value="favourite" ' + (movie.status === 'favourite' ? 'selected' : '') + '>⭐ Любимое</option><option value="dislike" ' + (movie.status === 'dislike' ? 'selected' : '') + '>👎 Не понравилось</option></select></div></div>' +
+            '<div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label">С кем</label><input type="text" class="form-control" id="meWatchedWith" value="' + (movie.watchedWith || '') + '"></div><div class="col-md-4"><label class="form-label">Дата</label><input type="date" class="form-control" id="meDate" value="' + (movie.date || '') + '"></div><div class="col-md-4"><label class="form-label">Длительность</label><input type="number" class="form-control" id="meRuntime" value="' + (movie.runtime || '') + '"></div></div>' +
+            '<div class="mb-3"><label class="form-label">Рецензия</label><textarea class="form-control" id="meReview" rows="3">' + (movie.review || '') + '</textarea></div>' +
+            '<div class="d-flex gap-2"><button type="submit" class="btn btn-success flex-grow-1">💾 Сохранить</button><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button></div>' +
+        '</form></div></div></div></div>');
     
-    window.setupStarRating('meStars', movie.rating||0);
-    const modal = new bootstrap.Modal(document.getElementById('movieEditModal'));
+    window.setupStarRating('meStars', movie.rating || 0);
+    var modal = new bootstrap.Modal(document.getElementById('movieEditModal'));
     modal.show();
-    document.getElementById('movieEditForm').onsubmit = async (e) => {
+    document.getElementById('movieEditForm').onsubmit = async function(e) {
         e.preventDefault();
         await window.updateDoc(window.doc(window.db, window.getMoviesCollection(), movie._firestoreId), {
             title: document.getElementById('meTitle').value.trim(),
@@ -133,8 +143,8 @@ function showMovieEditModal(movie) {
             rating: window.getStarRating('meStars'),
             status: document.getElementById('meStatus').value,
             watchedWith: document.getElementById('meWatchedWith').value.trim(),
-            date: document.getElementById('meDate').value||'',
-            runtime: parseInt(document.getElementById('meRuntime').value)||0,
+            date: document.getElementById('meDate').value || '',
+            runtime: parseInt(document.getElementById('meRuntime').value) || 0,
             review: document.getElementById('meReview').value.trim(),
             updatedAt: Date.now()
         });

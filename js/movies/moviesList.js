@@ -95,25 +95,13 @@ function renderMoviesCards(containerId, arr, emptyId) {
 
 // ========== ПОИСК TMDB ==========
 async function searchTMDB(query) {
-    if (!window.TMDB_PROXY_URL) {
-        alert('TMDB_PROXY_URL не настроен!');
-        return [];
-    }
-    
-    var url = window.TMDB_PROXY_URL.replace(/\/$/, '') + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
-    
-    console.log('🔍 Ищем:', url);  // ← ВРЕМЕННО
-    
+    if (!window.TMDB_PROXY_URL) return [];
     try {
+        var url = window.TMDB_PROXY_URL.replace(/\/$/, '') + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
         var resp = await fetch(url);
-        console.log('📡 Ответ:', resp.status);  // ← ВРЕМЕННО
         var data = await resp.json();
-        console.log('📦 Данные:', data);  // ← ВРЕМЕННО
         return data.results || [];
-    } catch (e) {
-        console.error('❌ Ошибка:', e);
-        return [];
-    }
+    } catch (e) { return []; }
 }
 
 async function getTMDBDetails(movieId) {
@@ -171,7 +159,7 @@ async function searchAndShowTMDB(query) {
     
     panel.classList.remove('d-none');
     container.innerHTML = results.slice(0, 6).map(function(m) {
-        var poster = m.poster_path ? 'https://image.tmdb.org/t/p/w300' + m.poster_path : 'https://placehold.co/300x450?text=Нет+постера';
+        var poster = m.poster_path ? window.TMDB_PROXY_URL + '/image/t/p/w300' + m.poster_path : 'https://placehold.co/300x450?text=Нет+постера';
         var title = m.title || m.name || 'Без названия';
         var year = m.release_date ? m.release_date.split('-')[0] : (m.first_air_date ? m.first_air_date.split('-')[0] : '—');
         
@@ -198,7 +186,7 @@ window.addMovieFromTMDB = async function(movieId, mediaType) {
         rating: Math.round((details.vote_average || 0) / 2),
         tmdbRating: details.vote_average || 0,
         genres: details.genres ? details.genres.map(function(g) { return g.name; }) : [],
-        runtime: details.runtime || details.episode_run_time?.[0] || 0,
+        runtime: details.runtime || (details.episode_run_time && details.episode_run_time[0]) || 0,
         tagline: details.tagline || '',
         countries: details.production_countries ? details.production_countries.map(function(c) { return c.name; }) : [],
         mediaType: mediaType || 'movie',
@@ -217,4 +205,4 @@ window.loadMovies = loadMovies;
 window.renderMoviesContent = renderMoviesContent;
 window.getMoviesCollection = getMoviesCollection;
 
-console.log('✅ moviesList.js загружен (TMDB)');
+console.log('✅ moviesList.js загружен (TMDB с прокси)');
