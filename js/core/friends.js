@@ -1,4 +1,4 @@
-// ==================== friends.js v9 ====================
+// ==================== friends.js v10 ====================
 const db = window.db;
 
 window.friends = [];
@@ -9,7 +9,7 @@ window.currentFriendId = null;
 
 window.loadFriends = async function () {
     if (!window.currentUser) return;
-    const uid = window.currentUser.uid;
+    var uid = window.currentUser.uid;
     try {
         var userSnap = await window.getDoc(window.doc(db, 'users', uid));
         if (userSnap.exists()) {
@@ -37,6 +37,25 @@ window.loadFriends = async function () {
         console.log('📊 Друзья:', window.friends.length, 'Входящие:', window.incomingRequests.length, 'Исходящие:', window.outgoingRequests.length);
         renderAllFriends();
     } catch (e) { console.error('loadFriends error:', e); }
+};
+
+// Проверка: является ли пользователь другом
+window.isFriend = function(uid) {
+    if (!window.friends || !window.currentUser) return false;
+    if (uid === window.currentUser.uid) return true;
+    return window.friends.some(function(f) { return f.uid === uid; });
+};
+
+// Добавить друга по ID (из профиля)
+window.addFriendById = function(uid) {
+    var input = document.getElementById('friendIdInput');
+    if (input) input.value = uid;
+    sendRequest(uid);
+    var profileModal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
+    if (profileModal) profileModal.hide();
+    setTimeout(function() {
+        new bootstrap.Modal(document.getElementById('friendsModal')).show();
+    }, 500);
 };
 
 function renderAllFriends() {
@@ -131,12 +150,22 @@ function renderFriendsModal() {
                 return '<div class="friend-item">' +
                     '<div class="d-flex align-items-center gap-2">' +
                         '<div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.8rem">' + (f.name || '?').charAt(0).toUpperCase() + '</div>' +
-                        '<strong>' + f.name + '</strong>' +
+                        '<div><strong>' + f.name + '</strong><br><small class="text-muted" style="font-size:0.7rem">Друзья с ' + new Date(f.addedAt).toLocaleDateString() + '</small></div>' +
                     '</div>' +
-                    '<button class="btn btn-sm btn-outline-danger remove-btn" data-uid="' + f.uid + '"><i class="bi bi-person-x"></i> Удалить</button>' +
+                    '<div class="d-flex gap-1">' +
+                        '<button class="btn btn-sm btn-outline-info view-friend-btn" data-uid="' + f.uid + '" title="Профиль"><i class="bi bi-person"></i></button>' +
+                        '<button class="btn btn-sm btn-outline-danger remove-btn" data-uid="' + f.uid + '" title="Удалить"><i class="bi bi-person-x"></i></button>' +
+                    '</div>' +
                 '</div>';
             }).join('');
             fl.querySelectorAll('.remove-btn').forEach(function(b) { b.onclick = function() { removeFriend(b.dataset.uid); }; });
+            fl.querySelectorAll('.view-friend-btn').forEach(function(b) {
+                b.onclick = function() {
+                    window.showProfile(b.dataset.uid);
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('friendsModal'));
+                    if (modal) modal.hide();
+                };
+            });
         }
     }
 }
@@ -158,7 +187,6 @@ async function sendRequest(targetId) {
     if (window.friends.find(function(f) { return f.uid === targetId; })) { alert('Уже в друзьях'); return; }
     if (window.outgoingRequests.find(function(r) { return r.toUid === targetId; })) { alert('Заявка уже отправлена'); return; }
     
-    // Если есть входящая от этого человека — сразу принимаем
     var existingReq = window.incomingRequests.find(function(r) { return r.fromUid === targetId; });
     if (existingReq) {
         await acceptRequest(existingReq.id);
@@ -197,11 +225,10 @@ async function acceptRequest(requestId) {
     var myName = window.currentUser.displayName || 'Пользователь';
     var friendName = req.fromName;
     
-    // Проверяем — не друзья ли уже
     if (window.friends.find(function(f) { return f.uid === friendUid; })) {
-        // Уже друзья — просто удаляем заявку
         await window.deleteDoc(window.doc(db, 'friendRequests', requestId));
         await window.loadFriends();
+        alert('⚠️ Вы уже друзья!');
         return;
     }
     
@@ -295,4 +322,4 @@ document.getElementById('copyIdBtn').addEventListener('click', function() {
     alert('✅ ID скопирован!');
 });
 
-console.log('✅ friends.js v9 загружен');
+console.log('✅ friends.js v10 загружен');

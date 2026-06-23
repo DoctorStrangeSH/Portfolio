@@ -22,10 +22,44 @@ window.showProfile = function(userId) {
 
 async function loadProfileData(userId) {
     var body = document.getElementById('profileBody');
+    var isOwner = userId === window.currentUser?.uid;
     
-    var profileSnap = await window.getDoc(window.doc(window.db, 'profiles', userId));
-    var profile = profileSnap.exists() ? profileSnap.data() : {};
+    // Проверка: друг или владелец?
+    if (!isOwner && !window.isFriend(userId)) {
+        body.innerHTML = 
+            '<div class="text-center py-4">' +
+                '<i class="bi bi-lock-fill text-muted" style="font-size:4rem"></i>' +
+                '<h5 class="mt-3">Приватный профиль</h5>' +
+                '<p class="text-muted">Этот пользователь делится только с друзьями.</p>' +
+                '<button class="btn btn-primary" onclick="window.addFriendById(\'' + userId + '\')">' +
+                    '<i class="bi bi-person-plus me-1"></i>Добавить в друзья' +
+                '</button>' +
+            '</div>';
+        return;
+    }
     
+    // Создаём профиль если нет
+    var profileRef = window.doc(window.db, 'profiles', userId);
+    var profileSnap = await window.getDoc(profileRef);
+    if (!profileSnap.exists()) {
+        var userSnap = await window.getDoc(window.doc(window.db, 'users', userId));
+        var name = 'Пользователь';
+        var photo = '';
+        if (userSnap.exists()) {
+            var userData = userSnap.data();
+            name = userData.name || name;
+        }
+        await window.setDoc(profileRef, {
+            name: name,
+            photo: photo,
+            bio: '',
+            createdAt: Date.now()
+        });
+    }
+    
+    var profile = (await window.getDoc(profileRef)).data();
+    
+    // Загружаем статистику
     var placesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/places'));
     var foodSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/food'));
     var moviesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/movies'));
@@ -43,9 +77,8 @@ async function loadProfileData(userId) {
     var totalBudget = places.reduce(function(s, p) { return s + (parseInt(p.budget) || 0); }, 0);
     
     var userName = profile.name || 'Пользователь';
-    var userPhoto = profile.photo || 'https://placehold.co/100/0d6efd/white?text=' + userName.charAt(0).toUpperCase();
+    var userPhoto = profile.photo || 'https://placehold.co/100/0d6efd/white?text=' + encodeURIComponent(userName.charAt(0).toUpperCase());
     var userBio = profile.bio || 'Здесь пока ничего нет...';
-    var isOwner = userId === window.currentUser?.uid;
     
     body.innerHTML = 
         '<div class="text-center mb-4">' +
@@ -54,7 +87,7 @@ async function loadProfileData(userId) {
             '<p class="text-muted">' + userBio + '</p>' +
             (isOwner ? '<button class="btn btn-sm btn-outline-primary" onclick="window.editProfile()"><i class="bi bi-pencil me-1"></i>Редактировать</button>' : '') +
             '<button class="btn btn-sm btn-outline-success ms-1" onclick="window.showCollections()"><i class="bi bi-collection me-1"></i>Подборки</button>' +
-            '<button class="btn btn-sm btn-outline-info ms-1" onclick="window.showPublicMap()"><i class="bi bi-map me-1"></i>Карта</button>' +
+            '<button class="btn btn-sm btn-outline-info ms-1" onclick="window.showPublicMap(\'' + userId + '\')"><i class="bi bi-map me-1"></i>Карта</button>' +
         '</div>' +
         '<div class="row g-2 mb-3">' +
             '<div class="col-3"><div class="card text-center p-2"><div style="font-size:1.5rem">✈️</div><strong>' + places.length + '</strong><small class="text-muted d-block">Мест</small></div></div>' +
@@ -64,12 +97,12 @@ async function loadProfileData(userId) {
         '</div>' +
         '<div class="row g-2 mb-3">' +
             '<div class="col-6"><div class="card text-center p-2 bg-success bg-opacity-10"><small class="text-muted">✅ Посещено мест</small><strong>' + visited + '</strong></div></div>' +
-            '<div class="col-6"><div class="card text-center p-2 bg-primary bg-opacity-10"><small class="text-muted">💰 Бюджет путешествий</small><strong>' + window.formatBudget(totalBudget) + '</strong></div></div>' +
+            '<div class="col-6"><div class="card text-center p-2 bg-primary bg-opacity-10"><small class="text-muted">💰 Бюджет</small><strong>' + window.formatBudget(totalBudget) + '</strong></div></div>' +
         '</div>' +
         '<div class="row g-2">' +
-            '<div class="col-4"><div class="card text-center p-2 bg-warning bg-opacity-10"><small class="text-muted">🍽️ Ресторанов</small><strong>' + foodVisited + '</strong></div></div>' +
-            '<div class="col-4"><div class="card text-center p-2 bg-info bg-opacity-10"><small class="text-muted">🎬 Фильмов</small><strong>' + moviesWatched + '</strong></div></div>' +
-            '<div class="col-4"><div class="card text-center p-2 bg-success bg-opacity-10"><small class="text-muted">✨ Мечт сделано</small><strong>' + dreamsDone + '</strong></div></div>' +
+            '<div class="col-4"><div class="card text-center p-2"><small class="text-muted">🍽️ Ресторанов</small><strong>' + foodVisited + '</strong></div></div>' +
+            '<div class="col-4"><div class="card text-center p-2"><small class="text-muted">🎬 Фильмов</small><strong>' + moviesWatched + '</strong></div></div>' +
+            '<div class="col-4"><div class="card text-center p-2"><small class="text-muted">✨ Мечт</small><strong>' + dreamsDone + '</strong></div></div>' +
         '</div>';
 }
 
