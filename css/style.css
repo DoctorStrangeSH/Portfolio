@@ -1,0 +1,389 @@
+/* ==================== style.css ==================== */
+
+/* Карточки */
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.02);
+}
+
+/* Приоритеты */
+.priority-high { border-left: 5px solid #dc3545; }
+.priority-medium { border-left: 5px solid #ffc107; }
+.priority-low { border-left: 5px solid #0d6efd; }
+
+/* Галерея */
+.photo-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.photo-thumb:hover,
+.photo-thumb.active-thumb {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.3);
+}
+
+#modalMainPhoto {
+    max-height: 70vh;
+    width: 100%;
+    object-fit: contain;
+}
+
+/* Вкладки */
+.tab-content > .tab-pane { display: none; }
+.tab-content > .active { display: block; }
+
+/* Фишки списков */
+.list-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    border: 2px solid #dee2e6;
+    background: white;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.list-chip:hover { border-color: #0d6efd; background: #f8f9fa; }
+.list-chip.active { border-color: #0d6efd; background: #e8f0fe; color: #0d6efd; font-weight: 500; }
+
+/* Фильтры */
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 50px;
+    cursor: pointer;
+    border: 1.5px solid #dee2e6;
+    background: white;
+    font-size: 0.8rem;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.category-chip:hover { border-color: #6c757d; background: #f8f9fa; }
+.category-chip.active { border-color: #0d6efd; background: #0d6efd; color: white; }
+
+/* Загрузка */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 9999;
+}
+
+/* Карточка */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+/* Бейдж категории */
+.category-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    backdrop-filter: blur(5px);
+    z-index: 3;
+}
+
+/* Бюджет */
+.budget-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(13, 110, 253, 0.9);
+    color: white;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    z-index: 3;
+}
+
+.budget-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+/* Дневник */
+.diary-entry {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.diary-date {
+    font-weight: 600;
+    color: #0d6efd;
+    font-size: 0.85rem;
+}
+
+/* Время */
+.time-ago {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.view-count {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+/* Анимация */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.4s ease forwards;
+}
+
+/* Навигация разделов */
+#sectionMenu .nav-link {
+    white-space: nowrap;
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: #6c757d;
+    transition: all 0.2s;
+}
+
+#sectionMenu .nav-link.active {
+    background: #0d6efd;
+    color: white;
+}
+
+#sectionMenu .nav-link:hover:not(.active):not(.disabled) {
+    background: #e8f0fe;
+    color: #0d6efd;
+}
+
+/* Слайдер */
+.photo-slider {
+    position: relative;
+    overflow: hidden;
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.photo-slider:hover .slider-btn { opacity: 1; }
+.slider-prev { left: 8px; }
+.slider-next { right: 8px; }
+
+.slider-dots {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 2;
+}
+
+.slider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+.slider-dot.active { background: white; }
+
+/* Рестораны */
+.food-type-badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #fff3cd;
+    color: #856404;
+}
+
+.price-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.price-1 { color: #198754; }
+.price-2 { color: #fd7e14; }
+.price-3 { color: #dc3545; }
+
+.restaurant-card .card-img-top {
+    height: 160px;
+}
+
+.visit-again-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(25,135,84,0.9);
+    color: white;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    z-index: 3;
+}
+
+/* Друзья */
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #f8f9fa;
+    transition: background 0.2s;
+}
+
+.request-item:hover { background: #e9ecef; }
+
+.friend-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.2s;
+}
+
+.friend-item:hover { background: #f0f0f0; }
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.status-pending { background: #fff3cd; color: #856404; }
+.status-accepted { background: #d4edda; color: #155724; }
+
+.hover-light:hover { background: #f8f9fa; }
+
+/* Звёзды */
+.star-rating {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+}
+
+/* Реакции */
+.reaction-btn {
+    transition: all 0.15s;
+}
+
+.reaction-btn.active {
+    background: #e8f0fe !important;
+    border-color: #0d6efd !important;
+}
+
+.reaction-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Анимация загрузки */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#loadingScreen > div {
+    animation: fadeIn 0.6s ease;
+}
+
+/* Скролл */
+#listChips::-webkit-scrollbar,
+#travelListChips::-webkit-scrollbar,
+#foodListChips::-webkit-scrollbar {
+    height: 4px;
+}
+
+#listChips::-webkit-scrollbar-thumb,
+#travelListChips::-webkit-scrollbar-thumb,
+#foodListChips::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 4px;
+}
+
+/* Карта */
+#travelMapContainer {
+    z-index: 1;
+}
+
+/* Профиль */
+#profileBody .card {
+    border-radius: 12px;
+}
+
+/* Лента активности */
+.feed-item {
+    transition: background 0.2s;
+}
+.feed-item:hover {
+    background: #e9ecef !important;
+}
+
+/* Кнопки в навигации */
+.navbar .btn-outline-light {
+    border-color: rgba(255,255,255,0.3);
+}
+.navbar .btn-outline-light:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .card-img-top { height: 150px; }
+    .restaurant-card .card-img-top { height: 140px; }
+}
