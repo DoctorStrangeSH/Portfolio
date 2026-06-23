@@ -4,7 +4,7 @@ window.dreamsState = {
     dreams: [],
     currentFilter: localStorage.getItem('dreamsFilter') || 'all',
     searchQuery: '',
-    viewMode: localStorage.getItem('dreamsView') || 'kanban' // kanban или grid
+    viewMode: localStorage.getItem('dreamsView') || 'kanban'
 };
 
 function getDreamsCollection() {
@@ -73,6 +73,13 @@ function renderKanban(dreams) {
             '</div>' +
         '</div>';
     }).join('') + '</div>';
+    
+    // Обработчики клика
+    container.querySelectorAll('[data-dream-id]').forEach(function(card) {
+        card.addEventListener('click', function() {
+            window.showDreamDetail(card.dataset.dreamId);
+        });
+    });
 }
 
 function createDreamKanbanCard(dream) {
@@ -80,7 +87,7 @@ function createDreamKanbanCard(dream) {
     var progress = dream.progress || 0;
     var progressColor = progress >= 80 ? 'bg-success' : progress >= 40 ? 'bg-warning' : 'bg-info';
     
-    return '<div class="card shadow-sm mb-2" style="cursor:pointer" onclick="window.showDreamDetail(\'' + dream._firestoreId + '\')">' +
+    return '<div class="card shadow-sm mb-2" style="cursor:pointer" data-dream-id="' + dream._firestoreId + '">' +
         '<div class="card-body p-2">' +
             '<small class="fw-bold">' + cat.emoji + ' ' + dream.title + '</small>' +
             '<div class="progress mt-1" style="height:6px"><div class="progress-bar ' + progressColor + '" style="width:' + progress + '%"></div></div>' +
@@ -88,6 +95,29 @@ function createDreamKanbanCard(dream) {
         '</div>' +
     '</div>';
 }
+
+// Глобальная функция для показа деталей
+window.showDreamDetail = function(dreamId) {
+    var d = window.dreamsState.dreams.find(function(x) { return x._firestoreId === dreamId; });
+    if (!d) return;
+    
+    var cat = window.DREAM_CATEGORIES[d.category] || window.DREAM_CATEGORIES.other;
+    var st = window.DREAM_STATUSES[d.status] || window.DREAM_STATUSES.dreaming;
+    var progress = d.progress || 0;
+    var progressColor = progress >= 80 ? 'bg-success' : progress >= 40 ? 'bg-warning' : 'bg-info';
+    
+    document.getElementById('detailTitle').textContent = '💭 ' + d.title;
+    document.getElementById('detailBody').innerHTML = 
+        (d.photo ? '<img src="' + d.photo + '" class="rounded mb-3" style="max-height:250px;width:100%;object-fit:cover">' : '') +
+        '<div class="row mb-3"><div class="col-6"><strong>Категория:</strong> ' + cat.emoji + ' ' + cat.name + '</div><div class="col-6"><strong>Статус:</strong> <span style="color:' + st.color + '">' + st.emoji + ' ' + st.name + '</span></div></div>' +
+        '<p><strong>Прогресс:</strong></p><div class="progress mb-2" style="height:12px"><div class="progress-bar ' + progressColor + '" style="width:' + progress + '%">' + progress + '%</div></div>' +
+        '<p><strong>Описание:</strong> ' + (d.description || '—') + '</p>' +
+        '<p><strong>Дедлайн:</strong> ' + (d.deadline || '—') + '</p>' +
+        '<p><strong>Стоимость:</strong> ' + (d.cost ? window.formatBudget(d.cost) : '—') + '</p>' +
+        (d.links && d.links.length > 0 ? '<p><strong>Ссылки:</strong> ' + d.links.map(function(l) { return '<a href="' + l + '" target="_blank" class="me-2">🔗</a>'; }).join('') + '</p>' : '');
+    
+    new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
+};
 
 function renderDreamsCards(containerId, arr, emptyId) {
     var c = document.getElementById(containerId);
@@ -115,7 +145,6 @@ function renderDreamsFilters() {
     });
     h += '</div>';
     
-    // Переключатель вида
     h += '<div class="btn-group btn-group-sm">' +
         '<button class="btn btn-outline-secondary ' + (window.dreamsState.viewMode === 'kanban' ? 'active' : '') + '" data-view="kanban"><i class="bi bi-columns-gap"></i> Канбан</button>' +
         '<button class="btn btn-outline-secondary ' + (window.dreamsState.viewMode === 'grid' ? 'active' : '') + '" data-view="grid"><i class="bi bi-grid-3x3-gap"></i> Сетка</button>' +
