@@ -96,16 +96,22 @@ function renderMoviesCards(containerId, arr, emptyId) {
 // ========== ПОИСК TMDB ==========
 async function searchTMDB(query) {
     if (!window.TMDB_PROXY_URL) {
-        alert('Настройте TMDB прокси');
+        alert('TMDB_PROXY_URL не настроен!');
         return [];
     }
+    
+    var url = window.TMDB_PROXY_URL + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
+    
+    console.log('🔍 Ищем:', url);  // ← ВРЕМЕННО
+    
     try {
-        var url = window.TMDB_PROXY_URL + '/proxy/search/movie?query=' + encodeURIComponent(query) + '&language=ru-RU&page=1';
         var resp = await fetch(url);
+        console.log('📡 Ответ:', resp.status);  // ← ВРЕМЕННО
         var data = await resp.json();
+        console.log('📦 Данные:', data);  // ← ВРЕМЕННО
         return data.results || [];
     } catch (e) {
-        console.error('TMDB error:', e);
+        console.error('❌ Ошибка:', e);
         return [];
     }
 }

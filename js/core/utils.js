@@ -51,9 +51,6 @@ window.RESTAURANT_STATUSES = {
     dislike: '👎 Не понравилось'
 };
 
-// OMDb API
-window.OMDB_API_KEY = '958510fd';
-
 // TMDB прокси
 window.TMDB_PROXY_URL = 'https://tmdb-proxy.sokrat3895.workers.dev/';
 
