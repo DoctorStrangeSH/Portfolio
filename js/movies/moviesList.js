@@ -293,6 +293,7 @@ window.addMovieFromTMDB = async function(tmdbId, mediaType) {
     };
     
     await window.addDoc(window.collection(window.db, getMoviesCollection()), data);
+    window.logActivity('movie_added', data.title, '');
     document.getElementById('tmdbSearch').classList.add('d-none');
     window.loadMovies();
     alert('✅ ' + data.title + ' добавлен!');

@@ -258,6 +258,7 @@ function showDreamAddModal() {
         };
         
         await window.addDoc(window.collection(window.db, getDreamsCollection()), data);
+        window.logActivity('dream_added', title, '');
         modal.hide();
         window.loadDreams();
         alert('✅ Мечта добавлена!');

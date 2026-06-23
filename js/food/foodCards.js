@@ -213,6 +213,7 @@ window.showFoodAddModal = function() {
             createdAt: Date.now()
         };
         await window.addDoc(window.collection(window.db, window.getFoodCollection()), data);
+        window.logActivity('food_added', name, '');
         modal.hide();
         window.loadFoodPlaces();
         alert('✅ Ресторан добавлен!');

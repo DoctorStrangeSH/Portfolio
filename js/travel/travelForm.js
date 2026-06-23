@@ -244,6 +244,7 @@ window.renderTravelForm = function(editPlace = null) {
                 data.views = 0;
                 data.reactions = {};
                 await window.addDoc(window.collection(window.db, window.getTravelCollection()), data);
+                window.logActivity('place_added', name, '');
                 console.log('✅ Добавлено');
             }
             

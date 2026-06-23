@@ -73,6 +73,22 @@ window.DREAM_CATEGORIES = {
     other: { emoji: '✨', name: 'Другое', color: '#6c757d' }
 };
 
+// Сохранение активности
+window.logActivity = async function(type, title, link) {
+    if (!window.currentUser) return;
+    try {
+        await window.addDoc(window.collection(window.db, 'activity'), {
+            userId: window.currentUser.uid,
+            userName: window.currentUser.displayName || 'Пользователь',
+            userPhoto: window.currentUser.photoURL || '',
+            type: type,
+            title: title,
+            link: link || '',
+            createdAt: Date.now()
+        });
+    } catch (e) {}
+};
+
 window.DREAM_STATUSES = {
     dreaming: { emoji: '💭', name: 'Мечтаю', color: '#6c757d' },
     planning: { emoji: '📋', name: 'Планирую', color: '#0d6efd' },
