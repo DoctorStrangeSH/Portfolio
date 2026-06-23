@@ -55,7 +55,7 @@ window.RESTAURANT_STATUSES = {
 window.OMDB_API_KEY = '958510fd';
 
 // TMDB прокси
-window.TMDB_PROXY_URL = 'https://tmdb-proxy.ваш-username.workers.dev';
+window.TMDB_PROXY_URL = 'https://tmdb-proxy.sokrat3895.workers.dev/';
 
 // Статусы фильмов
 window.MOVIE_STATUSES = {
