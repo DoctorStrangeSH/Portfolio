@@ -51,8 +51,8 @@ window.RESTAURANT_STATUSES = {
     dislike: '👎 Не понравилось'
 };
 
-// API Кинопоиска
-window.KINOPOISK_API_KEY = "XYBPJHC-NRHM8YM-HWBCEKH-WPRYVXQ";
+// OMDb API
+window.OMDB_API_KEY = '958510fd';
 
 // Статусы фильмов
 window.MOVIE_STATUSES = {

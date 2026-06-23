@@ -36,8 +36,7 @@ function getFilteredMovies() {
     if (window.moviesState.searchQuery) {
         var q = window.moviesState.searchQuery.toLowerCase();
         arr = arr.filter(function(m) {
-            return (m.title || '').toLowerCase().indexOf(q) !== -1 ||
-                   (m.overview || '').toLowerCase().indexOf(q) !== -1;
+            return (m.title || '').toLowerCase().indexOf(q) !== -1;
         });
     }
     return arr;
@@ -93,36 +92,28 @@ function renderMoviesCards(containerId, arr, emptyId) {
     });
 }
 
-// ========== ПОИСК КИНОПОИСК (kinopoisk.dev) ==========
-async function searchKinopoisk(query) {
-    if (!window.KINOPOISK_API_KEY || window.KINOPOISK_API_KEY === 'ВАШ_КЛЮЧ_СЮДА' || window.KINOPOISK_API_KEY.indexOf('ВАШ') !== -1) {
-        alert('Добавьте API ключ в js/core/utils.js');
-        return [];
+// ========== ПОИСК ЧЕРЕЗ OMDb ==========
+async function searchOMDb(query) {
+    if (!window.OMDB_API_KEY || window.OMDB_API_KEY === 'ВАШ_OMDB_КЛЮЧ') {
+        alert('Добавьте OMDb API ключ в js/core/utils.js');
+        return null;
     }
     try {
-        var url = 'https://api.kinopoisk.dev/v1.4/movie/search?page=1&limit=6&query=' + encodeURIComponent(query);
-        var resp = await fetch(url, {
-            headers: { 'X-API-KEY': window.KINOPOISK_API_KEY }
-        });
-        if (!resp.ok) {
-            console.error('Ошибка API:', resp.status);
-            return [];
-        }
+        var url = 'https://www.omdbapi.com/?apikey=' + window.OMDB_API_KEY + '&s=' + encodeURIComponent(query);
+        var resp = await fetch(url);
         var data = await resp.json();
-        return data.docs || [];
+        if (data.Response === 'True') return data.Search || [];
+        return [];
     } catch (e) {
-        console.error('Поиск не удался:', e);
+        console.error('OMDb error:', e);
         return [];
     }
 }
 
-async function getKinopoiskDetails(filmId) {
+async function getOMDbDetails(imdbId) {
     try {
-        var url = 'https://api.kinopoisk.dev/v1.4/movie/' + filmId;
-        var resp = await fetch(url, {
-            headers: { 'X-API-KEY': window.KINOPOISK_API_KEY }
-        });
-        if (!resp.ok) return null;
+        var url = 'https://www.omdbapi.com/?apikey=' + window.OMDB_API_KEY + '&i=' + imdbId + '&plot=full';
+        var resp = await fetch(url);
         return await resp.json();
     } catch (e) { return null; }
 }
@@ -135,7 +126,7 @@ window.renderMoviesSection = function(container) {
             '<div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="moviesSearch" placeholder="Поиск..."></div></div>' +
             '<div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="moviesAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить фильм</button></div>' +
         '</div>' +
-        '<div id="kpSearch" class="d-none mb-3"><div class="card"><div class="card-body"><h6><i class="bi bi-search me-2"></i>Результаты поиска</h6><div class="row g-2" id="kpResults"></div><button class="btn btn-sm btn-outline-secondary mt-2" id="kpClose">Закрыть</button></div></div></div>' +
+        '<div id="omdbSearch" class="d-none mb-3"><div class="card"><div class="card-body"><h6><i class="bi bi-search me-2"></i>Результаты поиска</h6><div class="row g-2" id="omdbResults"></div><button class="btn btn-sm btn-outline-secondary mt-2" id="omdbClose">Закрыть</button></div></div></div>' +
         '<div id="moviesFilters" class="mb-3"></div>' +
         '<div class="row g-2 mb-3"><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="moviesAllCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="moviesWantCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посмотрел</small><strong id="moviesWatchedCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="moviesFavCount">0</strong></div></div></div>' +
         '<div class="row g-3" id="moviesContainer"></div>' +
@@ -143,11 +134,11 @@ window.renderMoviesSection = function(container) {
     
     document.getElementById('moviesAddBtn').addEventListener('click', function() {
         var query = prompt('🔍 Введите название фильма:');
-        if (query) searchAndShowKP(query);
+        if (query) searchAndShowOMDb(query);
     });
     
-    document.getElementById('kpClose').addEventListener('click', function() {
-        document.getElementById('kpSearch').classList.add('d-none');
+    document.getElementById('omdbClose').addEventListener('click', function() {
+        document.getElementById('omdbSearch').classList.add('d-none');
     });
     
     document.getElementById('moviesSearch').addEventListener('input', function() {
@@ -159,69 +150,51 @@ window.renderMoviesSection = function(container) {
     loadMovies();
 };
 
-async function searchAndShowKP(query) {
-    var results = await searchKinopoisk(query);
-    var panel = document.getElementById('kpSearch');
-    var container = document.getElementById('kpResults');
+async function searchAndShowOMDb(query) {
+    var results = await searchOMDb(query);
+    var panel = document.getElementById('omdbSearch');
+    var container = document.getElementById('omdbResults');
     
-    if (!results.length) {
-        alert('Ничего не найдено. Проверьте API ключ.');
+    if (!results || !results.length) {
+        alert('Ничего не найдено');
         return;
     }
     
     panel.classList.remove('d-none');
     container.innerHTML = results.slice(0, 6).map(function(f) {
-        var poster = f.poster ? f.poster.url || f.poster : '';
-        var preview = f.poster ? f.poster.previewUrl || poster : '';
-        var title = f.name || f.alternativeName || 'Без названия';
-        var year = f.year || '—';
-        var rating = f.rating ? f.rating.kp || f.rating.imdb || '—' : '—';
-        
-        return '<div class="col-md-4 col-lg-2"><div class="card h-100" style="cursor:pointer" onclick="window.addMovieFromKP(' + f.id + ')">' +
-            '<img src="' + (preview || 'https://placehold.co/300x450?text=Нет+постера') + '" class="card-img-top" style="height:200px;object-fit:cover">' +
-            '<div class="card-body p-2 text-center"><small class="fw-bold">' + title + '</small><br><small class="text-muted">' + year + ' | ⭐ ' + rating + '</small></div>' +
+        return '<div class="col-md-4 col-lg-2"><div class="card h-100" style="cursor:pointer" onclick="window.addMovieFromOMDb(\'' + f.imdbID + '\')">' +
+            '<img src="' + (f.Poster !== 'N/A' ? f.Poster : 'https://placehold.co/300x450?text=Нет+постера') + '" class="card-img-top" style="height:200px;object-fit:cover">' +
+            '<div class="card-body p-2 text-center"><small class="fw-bold">' + f.Title + '</small><br><small class="text-muted">' + f.Year + '</small></div>' +
             '</div></div>';
     }).join('');
 }
 
-window.addMovieFromKP = async function(filmId) {
-    var details = await getKinopoiskDetails(filmId);
-    if (!details) {
-        // Если детали не загрузились — добавляем базовые
-        alert('Фильм добавлен с базовыми данными');
-        await window.addDoc(window.collection(window.db, getMoviesCollection()), {
-            title: 'Фильм ' + filmId,
-            kpId: filmId,
-            status: 'want',
-            author: window.currentUser ? window.currentUser.displayName.split(' ')[0] : 'Я',
-            createdAt: Date.now()
-        });
-    } else {
-        var posterUrl = '';
-        if (details.poster && details.poster.url) posterUrl = details.poster.url;
-        
-        await window.addDoc(window.collection(window.db, getMoviesCollection()), {
-            title: details.name || details.alternativeName || 'Без названия',
-            originalTitle: details.alternativeName || '',
-            year: details.year || '',
-            poster: posterUrl,
-            overview: details.description || '',
-            rating: details.rating ? Math.round((details.rating.kp || details.rating.imdb || 0) / 2) : 0,
-            kpRating: details.rating ? (details.rating.kp || 0) : 0,
-            imdbRating: details.rating ? (details.rating.imdb || 0) : 0,
-            genres: details.genres ? details.genres.map(function(g) { return g.name; }) : [],
-            runtime: details.movieLength || 0,
-            slogan: details.slogan || '',
-            countries: details.countries ? details.countries.map(function(c) { return c.name; }) : [],
-            status: 'want',
-            author: window.currentUser ? window.currentUser.displayName.split(' ')[0] : 'Я',
-            createdAt: Date.now()
-        });
-    }
+window.addMovieFromOMDb = async function(imdbId) {
+    var details = await getOMDbDetails(imdbId);
+    if (!details) return alert('Не удалось загрузить');
     
-    document.getElementById('kpSearch').classList.add('d-none');
+    var data = {
+        title: details.Title || '',
+        year: details.Year || '',
+        poster: details.Poster !== 'N/A' ? details.Poster : '',
+        overview: details.Plot || '',
+        rating: Math.round((parseFloat(details.imdbRating) || 0) / 2),
+        imdbRating: details.imdbRating || 0,
+        genres: details.Genre ? details.Genre.split(', ') : [],
+        runtime: parseInt(details.Runtime) || 0,
+        director: details.Director || '',
+        actors: details.Actors || '',
+        country: details.Country || '',
+        imdbId: imdbId,
+        status: 'want',
+        author: window.currentUser ? window.currentUser.displayName.split(' ')[0] : 'Я',
+        createdAt: Date.now()
+    };
+    
+    await window.addDoc(window.collection(window.db, getMoviesCollection()), data);
+    document.getElementById('omdbSearch').classList.add('d-none');
     window.loadMovies();
-    alert('✅ Фильм добавлен!');
+    alert('✅ ' + data.title + ' добавлен!');
 };
 
 window.loadMovies = loadMovies;
