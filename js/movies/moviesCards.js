@@ -1,4 +1,4 @@
-// ==================== moviesCards.js ====================
+// ==================== moviesCards.js v3 ====================
 
 window.createMovieCard = function(movie, index) {
     var col = document.createElement('div');
@@ -6,79 +6,54 @@ window.createMovieCard = function(movie, index) {
     col.style.animationDelay = (index * 0.03) + 's';
     
     var poster = movie.poster;
-    if (poster && poster.indexOf('image.tmdb.org') !== -1) {
-        poster = poster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
-    }
-    if (!poster) poster = 'https://placehold.co/300x450/1a1a2e/eee?text=Нет+постера';
+    if (poster && poster.indexOf('image.tmdb.org') !== -1) poster = poster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
+    if (!poster) poster = 'https://placehold.co/300x450/5b5fef/white?text=🎬';
     
     var genres = movie.genres || [];
     var runtime = '';
-    if (movie.mediaType === 'tv' && movie.seasons) {
-        runtime = movie.seasons + ' сез. | ' + (movie.episodes || '?') + ' эп.';
-    } else if (movie.runtime) {
-        runtime = Math.floor(movie.runtime / 60) + 'ч ' + (movie.runtime % 60) + 'мин';
-    }
+    if (movie.mediaType === 'tv' && movie.seasons) runtime = movie.seasons + ' сез.';
+    else if (movie.runtime) runtime = Math.floor(movie.runtime/60) + 'ч ' + (movie.runtime%60) + 'мин';
     var type = movie.mediaType === 'tv' ? '📺' : '🎬';
     
     var statusBadge = '';
-    if (movie.status === 'favourite') statusBadge = '<span class="visit-again-badge">⭐ Любимое</span>';
-    else if (movie.status === 'dislike') statusBadge = '<span class="visit-again-badge" style="background:rgba(220,53,69,0.9)">👎 Не понравилось</span>';
+    if (movie.status === 'favourite') statusBadge = '<span class="position-absolute badge" style="top:8px;left:8px;z-index:3;background:#10b981;color:white">⭐</span>';
+    else if (movie.status === 'dislike') statusBadge = '<span class="position-absolute badge" style="top:8px;left:8px;z-index:3;background:#ef4444;color:white">👎</span>';
     
     var quickActions = '';
-    if (movie.status === 'want') {
-        quickActions = 
-            '<button class="btn btn-sm btn-outline-success movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched"><i class="bi bi-check-lg"></i></button>' +
-            '<button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite"><i class="bi bi-star"></i></button>' +
-            '<button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>';
-    } else if (movie.status === 'watched') {
-        quickActions = 
-            '<button class="btn btn-sm btn-outline-warning movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite"><i class="bi bi-star"></i></button>' +
-            '<button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike"><i class="bi bi-hand-thumbs-down"></i></button>';
-    } else {
-        quickActions = '<button class="btn btn-sm btn-outline-secondary movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched"><i class="bi bi-arrow-repeat"></i></button>';
-    }
+    if (movie.status === 'want') quickActions = '<button class="btn btn-sm btn-outline-primary movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched" style="border-radius:20px"><i class="bi bi-check-lg"></i></button><button class="btn btn-sm btn-outline-success movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite" style="border-radius:20px"><i class="bi bi-star"></i></button><button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike" style="border-radius:20px"><i class="bi bi-hand-thumbs-down"></i></button>';
+    else if (movie.status === 'watched') quickActions = '<button class="btn btn-sm btn-outline-success movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="favourite" style="border-radius:20px"><i class="bi bi-star"></i></button><button class="btn btn-sm btn-outline-danger movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="dislike" style="border-radius:20px"><i class="bi bi-hand-thumbs-down"></i></button>';
+    else quickActions = '<button class="btn btn-sm btn-outline-secondary movie-mark-btn" data-id="' + movie._firestoreId + '" data-status="watched" style="border-radius:20px"><i class="bi bi-arrow-repeat"></i></button>';
     
     col.innerHTML = 
-        '<div class="card h-100 shadow-sm movie-card mb-3 border-0 overflow-hidden">' +
-            statusBadge +
-            '<div class="position-relative">' +
-                '<img src="' + poster + '" class="card-img-top" alt="' + movie.title + '" style="height:300px;object-fit:cover">' +
-                '<span class="position-absolute badge bg-dark bg-opacity-50" style="top:8px;right:8px;z-index:3">' + type + '</span>' +
-                '<div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,rgba(0,0,0,0.8));pointer-events:none"></div>' +
+        '<div class="card h-100 shadow-sm mb-3 border-0 overflow-hidden">' +
+            '<div class="position-relative">' + statusBadge +
+                '<img src="' + poster + '" class="card-img-top" style="height:280px;object-fit:cover">' +
+                '<span class="position-absolute badge" style="top:8px;right:8px;z-index:3;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px)">' + type + '</span>' +
+                '<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,rgba(0,0,0,0.7))"></div>' +
             '</div>' +
             '<div class="card-body d-flex flex-column p-2">' +
-                '<h6 class="card-title mb-1" style="font-size:0.9rem">' + movie.title + '</h6>' +
-                '<div class="d-flex justify-content-between align-items-center mb-1"><small class="text-muted">' + (movie.year || '—') + '</small><small>' + window.renderStars(movie.rating) + '</small></div>' +
-                (movie.tmdbRating ? '<small class="text-muted">TMDB: ' + movie.tmdbRating + '</small>' : '') +
-                (genres.length > 0 ? '<div class="d-flex flex-wrap gap-1 mb-1">' + genres.slice(0,2).map(function(g) { return '<span class="badge bg-light text-secondary" style="font-size:0.6rem">' + g + '</span>'; }).join('') + '</div>' : '') +
-                (runtime ? '<small class="text-muted d-block">⏱️ ' + runtime + '</small>' : '') +
-                (movie.watchedWith ? '<small class="text-muted d-block">👤 ' + movie.watchedWith + '</small>' : '') +
-                (movie.date ? '<small class="text-muted d-block">📅 ' + movie.date + '</small>' : '') +
-                '<div class="mt-auto d-flex gap-1 flex-wrap pt-1">' +
-                    quickActions +
-                    '<button class="btn btn-sm btn-outline-secondary comment-btn" data-id="' + movie._firestoreId + '" data-type="movie" title="Комментарии"><i class="bi bi-chat-dots"></i></button>' +
-                    '<button class="btn btn-sm btn-outline-info movie-detail-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-info-circle"></i></button>' +
-                    '<button class="btn btn-sm btn-outline-warning movie-edit-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-pencil"></i></button>' +
-                    '<button class="btn btn-sm btn-outline-danger movie-del-btn" data-id="' + movie._firestoreId + '"><i class="bi bi-trash"></i></button>' +
+                '<h6 class="card-title mb-1" style="font-size:0.85rem">' + movie.title + '</h6>' +
+                '<div class="d-flex justify-content-between align-items-center mb-1"><small style="color:var(--text-muted)">' + (movie.year||'—') + '</small>' + window.renderStars(movie.rating) + '</div>' +
+                (movie.tmdbRating ? '<small style="color:var(--text-muted)">TMDB: ' + movie.tmdbRating + '</small>' : '') +
+                (genres.length ? '<div class="d-flex flex-wrap gap-1 mb-1">' + genres.slice(0,2).map(function(g) { return '<span class="badge" style="background:var(--border);color:var(--text-muted);font-size:0.65rem">' + g + '</span>'; }).join('') + '</div>' : '') +
+                (runtime ? '<small class="d-block" style="color:var(--text-muted)">⏱️ ' + runtime + '</small>' : '') +
+                '<div class="mt-auto d-flex gap-1 flex-wrap pt-1">' + quickActions +
+                    '<button class="btn btn-sm btn-outline-secondary comment-btn" data-id="' + movie._firestoreId + '" data-type="movie" style="border-radius:20px"><i class="bi bi-chat-dots"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-secondary movie-detail-btn" data-id="' + movie._firestoreId + '" style="border-radius:20px"><i class="bi bi-info-circle"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-secondary movie-edit-btn" data-id="' + movie._firestoreId + '" style="border-radius:20px"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-danger movie-del-btn" data-id="' + movie._firestoreId + '" style="border-radius:20px"><i class="bi bi-trash"></i></button>' +
                 '</div>' +
             '</div>' +
         '</div>';
     return col;
 };
 
-// ========== ГЛОБАЛЬНЫЕ ОБРАБОТЧИКИ ==========
 document.addEventListener('click', async function(e) {
     var markBtn = e.target.closest('.movie-mark-btn');
     if (markBtn) {
-        var id = markBtn.dataset.id;
-        var newStatus = markBtn.dataset.status;
-        var updateData = { status: newStatus };
-        if (newStatus === 'watched') updateData.date = new Date().toISOString().split('T')[0];
-        await window.updateDoc(window.doc(window.db, window.getMoviesCollection(), id), updateData);
-        if (newStatus === 'watched') {
-            var m = window.moviesState.movies.find(function(x) { return x._firestoreId === id; });
-            if (m) window.logActivity('movie_watched', m.title, '');
-        }
+        var updateData = { status: markBtn.dataset.status };
+        if (markBtn.dataset.status === 'watched') updateData.date = new Date().toISOString().split('T')[0];
+        await window.updateDoc(window.doc(window.db, window.getMoviesCollection(), markBtn.dataset.id), updateData);
         window.loadMovies();
         return;
     }
@@ -92,8 +67,7 @@ document.addEventListener('click', async function(e) {
     
     var delBtn = e.target.closest('.movie-del-btn');
     if (delBtn) {
-        var m = window.moviesState.movies.find(function(x) { return x._firestoreId === delBtn.dataset.id; });
-        if (!confirm('Удалить "' + (m ? m.title : 'фильм') + '"?')) return;
+        if (!confirm('Удалить?')) return;
         await window.deleteDoc(window.doc(window.db, window.getMoviesCollection(), delBtn.dataset.id));
         window.loadMovies();
         return;
@@ -103,52 +77,36 @@ document.addEventListener('click', async function(e) {
     if (detailBtn) {
         var m = window.moviesState.movies.find(function(x) { return x._firestoreId === detailBtn.dataset.id; });
         if (!m) return;
-        var detPoster = m.poster;
-        if (detPoster && detPoster.indexOf('image.tmdb.org') !== -1) {
-            detPoster = detPoster.replace('https://image.tmdb.org', window.TMDB_PROXY_URL + '/image');
-        }
         document.getElementById('detailTitle').textContent = '🎬 ' + m.title;
         document.getElementById('detailBody').innerHTML = 
-            (detPoster ? '<img src="' + detPoster + '" class="rounded mb-3" style="max-height:300px">' : '') +
-            '<p><strong>Год:</strong> ' + (m.year || '—') + ' | <strong>TMDB:</strong> ' + (m.tmdbRating || '—') + '</p>' +
-            '<p><strong>Жанры:</strong> ' + ((m.genres || []).join(', ') || '—') + '</p>' +
-            '<p><strong>Длительность:</strong> ' + (m.runtime ? Math.floor(m.runtime/60) + 'ч ' + (m.runtime%60) + 'мин' : '—') + '</p>' +
-            '<p><strong>Страна:</strong> ' + ((m.countries || []).join(', ') || '—') + '</p>' +
-            '<p><strong>Слоган:</strong> ' + (m.tagline || '—') + '</p>' +
-            '<p><strong>Описание:</strong> ' + (m.overview || '—') + '</p>' +
-            '<p><strong>Мой рейтинг:</strong> ' + window.renderStars(m.rating) + '</p>' +
-            '<p><strong>Рецензия:</strong> ' + (m.review || '—') + '</p>' +
-            '<p><strong>Смотрел с:</strong> ' + (m.watchedWith || '—') + '</p>' +
-            '<p><strong>Дата:</strong> ' + (m.date || '—') + '</p>' +
-            '<button class="btn btn-sm btn-outline-secondary mt-2" onclick="window.showComments(\'' + m._firestoreId + '\', \'movie\')"><i class="bi bi-chat-dots me-1"></i>Комментарии</button>';
+            '<p><strong>Год:</strong> ' + (m.year||'—') + ' | <strong>TMDB:</strong> ' + (m.tmdbRating||'—') + '</p>' +
+            '<p><strong>Жанры:</strong> ' + ((m.genres||[]).join(', ')||'—') + '</p>' +
+            '<p><strong>Описание:</strong> ' + (m.overview||'—') + '</p>' +
+            '<p><strong>Оценка:</strong> ' + window.renderStars(m.rating) + '</p>' +
+            '<button class="btn btn-sm btn-outline-primary rounded-pill mt-2" onclick="window.showComments(\'' + m._firestoreId + '\', \'movie\')"><i class="bi bi-chat-dots me-1"></i>Комментарии</button>';
         new bootstrap.Modal(document.getElementById('placeDetailModal')).show();
         return;
     }
     
     var commentBtn = e.target.closest('.comment-btn');
-    if (commentBtn) {
-        window.showComments(commentBtn.dataset.id, commentBtn.dataset.type);
-        return;
-    }
+    if (commentBtn) window.showComments(commentBtn.dataset.id, commentBtn.dataset.type);
 });
 
-// ========== МОДАЛКА РЕДАКТИРОВАНИЯ ==========
 function showMovieEditModal(movie) {
     var old = document.getElementById('movieEditModal');
     if (old) old.remove();
-    document.body.insertAdjacentHTML('beforeend', 
+    document.body.insertAdjacentHTML('beforeend',
         '<div class="modal fade" id="movieEditModal" tabindex="-1">' +
-        '<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow">' +
-        '<div class="modal-header bg-light"><h5 class="modal-title">✏️ Редактировать</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>' +
-        '<div class="modal-body"><form id="movieEditForm" autocomplete="off">' +
-            '<div class="row g-3 mb-3"><div class="col-md-8"><label class="form-label">Название</label><input type="text" class="form-control" id="meTitle" value="' + (movie.title || '') + '"></div><div class="col-md-4"><label class="form-label">Год</label><input type="text" class="form-control" id="meYear" value="' + (movie.year || '') + '"></div></div>' +
-            '<div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Мой рейтинг</label><div class="d-flex gap-1" id="meStars"></div></div><div class="col-md-6"><label class="form-label">Статус</label><select class="form-select" id="meStatus"><option value="want" ' + (movie.status === 'want' ? 'selected' : '') + '>🔖 Хочу</option><option value="watched" ' + (movie.status === 'watched' ? 'selected' : '') + '>✅ Посмотрел</option><option value="favourite" ' + (movie.status === 'favourite' ? 'selected' : '') + '>⭐ Любимое</option><option value="dislike" ' + (movie.status === 'dislike' ? 'selected' : '') + '>👎 Не понравилось</option></select></div></div>' +
-            '<div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label">С кем</label><input type="text" class="form-control" id="meWatchedWith" value="' + (movie.watchedWith || '') + '"></div><div class="col-md-4"><label class="form-label">Дата</label><input type="date" class="form-control" id="meDate" value="' + (movie.date || '') + '"></div><div class="col-md-4"><label class="form-label">Длительность</label><input type="number" class="form-control" id="meRuntime" value="' + (movie.runtime || '') + '"></div></div>' +
-            '<div class="mb-3"><label class="form-label">Рецензия</label><textarea class="form-control" id="meReview" rows="3">' + (movie.review || '') + '</textarea></div>' +
-            '<div class="d-flex gap-2"><button type="submit" class="btn btn-success flex-grow-1">💾 Сохранить</button><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button></div>' +
+        '<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content border-0 shadow" style="border-radius:20px;overflow:hidden">' +
+        '<div class="modal-header border-0" style="background:var(--primary);color:white"><h5>✏️ Редактировать</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>' +
+        '<div class="modal-body p-4"><form id="movieEditForm">' +
+            '<div class="row g-3 mb-3"><div class="col-md-8"><label class="form-label">Название</label><input type="text" class="form-control rounded-pill" id="meTitle" value="' + (movie.title||'') + '"></div><div class="col-md-4"><label class="form-label">Год</label><input type="text" class="form-control rounded-pill" id="meYear" value="' + (movie.year||'') + '"></div></div>' +
+            '<div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label">Оценка</label><div class="d-flex gap-1" id="meStars"></div></div><div class="col-md-6"><label class="form-label">Статус</label><select class="form-select rounded-pill" id="meStatus"><option value="want" ' + (movie.status==='want'?'selected':'') + '>🔖 Хочу</option><option value="watched" ' + (movie.status==='watched'?'selected':'') + '>✅ Посмотрел</option><option value="favourite" ' + (movie.status==='favourite'?'selected':'') + '>⭐ Любимое</option><option value="dislike" ' + (movie.status==='dislike'?'selected':'') + '>👎 Не понравилось</option></select></div></div>' +
+            '<div class="mb-3"><label class="form-label">Рецензия</label><textarea class="form-control" id="meReview" rows="3" style="border-radius:16px">' + (movie.review||'') + '</textarea></div>' +
+            '<div class="d-flex gap-2"><button type="submit" class="btn btn-primary rounded-pill flex-grow-1">💾 Сохранить</button><button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Отмена</button></div>' +
         '</form></div></div></div></div>');
     
-    window.setupStarRating('meStars', movie.rating || 0);
+    window.setupStarRating('meStars', movie.rating||0);
     var modal = new bootstrap.Modal(document.getElementById('movieEditModal'));
     modal.show();
     document.getElementById('movieEditForm').onsubmit = async function(e) {
@@ -158,9 +116,6 @@ function showMovieEditModal(movie) {
             year: document.getElementById('meYear').value.trim(),
             rating: window.getStarRating('meStars'),
             status: document.getElementById('meStatus').value,
-            watchedWith: document.getElementById('meWatchedWith').value.trim(),
-            date: document.getElementById('meDate').value || '',
-            runtime: parseInt(document.getElementById('meRuntime').value) || 0,
             review: document.getElementById('meReview').value.trim(),
             updatedAt: Date.now()
         });
@@ -169,4 +124,4 @@ function showMovieEditModal(movie) {
     };
 }
 
-console.log('✅ moviesCards.js загружен');
+console.log('✅ moviesCards.js v3 загружен');
