@@ -1,4 +1,4 @@
-// ==================== foodList.js ====================
+// ==================== foodList.js v2 ====================
 
 window.foodState = {
     places: [],
@@ -31,11 +31,7 @@ function getFilteredFoodPlaces() {
     if (window.foodState.priceFilter !== 'all') arr = arr.filter(function(p) { return p.price === parseInt(window.foodState.priceFilter); });
     if (window.foodState.searchQuery) {
         var q = window.foodState.searchQuery.toLowerCase();
-        arr = arr.filter(function(p) {
-            return (p.name || '').toLowerCase().indexOf(q) !== -1 ||
-                   ((window.CUISINE_TYPES[p.cuisine] || '')).toLowerCase().indexOf(q) !== -1 ||
-                   (p.description || '').toLowerCase().indexOf(q) !== -1;
-        });
+        arr = arr.filter(function(p) { return (p.name || '').toLowerCase().indexOf(q) !== -1 || ((window.CUISINE_TYPES[p.cuisine] || '')).toLowerCase().indexOf(q) !== -1; });
     }
     return arr;
 }
@@ -96,30 +92,27 @@ function renderFoodCards(containerId, arr, emptyId) {
     if (arr.length === 0) { e.classList.remove('d-none'); return; }
     e.classList.add('d-none');
     arr.forEach(function(place, i) {
-        if (window.createFoodCard) {
-            var card = window.createFoodCard(place, i);
-            if (card) c.appendChild(card);
-        }
+        if (window.createFoodCard) { var card = window.createFoodCard(place, i); if (card) c.appendChild(card); }
     });
 }
 
 window.renderFoodSection = function(container) {
     container.innerHTML = 
-        '<div class="d-flex gap-2 flex-wrap align-items-center mb-3 overflow-auto pb-1" id="foodListChips"></div>' +
-        '<div class="row g-2 mb-3"><div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="foodSearch" placeholder="Поиск..."></div></div><div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="foodAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить ресторан</button></div></div>' +
-        '<div id="foodFilters" class="mb-3"></div>' +
-        '<div class="row g-2 mb-3"><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="foodAllCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="foodWantCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посетил</small><strong id="foodVisitedCount">0</strong></div></div><div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="foodFavCount">0</strong></div></div></div>' +
-        '<div class="row g-3" id="foodContainer"></div>' +
-        '<div id="foodEmpty" class="text-center py-5 d-none"><i class="bi bi-cup-hot text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет ресторанов</p></div>';
+        '<div class="fade-in">' +
+            '<div class="row g-2 mb-3"><div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="foodSearch" placeholder="Поиск..."></div></div><div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="foodAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить ресторан</button></div></div>' +
+            '<div id="foodFilters" class="mb-3"></div>' +
+            '<div class="row g-2 mb-3">' +
+                '<div class="col-3"><div class="card text-center p-2"><small class="text-muted">Всего</small><strong id="foodAllCount">0</strong></div></div>' +
+                '<div class="col-3"><div class="card text-center p-2"><small class="text-muted">Хочу</small><strong id="foodWantCount">0</strong></div></div>' +
+                '<div class="col-3"><div class="card text-center p-2"><small class="text-muted">Посетил</small><strong id="foodVisitedCount">0</strong></div></div>' +
+                '<div class="col-3"><div class="card text-center p-2"><small class="text-muted">⭐ Любимые</small><strong id="foodFavCount">0</strong></div></div>' +
+            '</div>' +
+            '<div class="row g-3" id="foodContainer"></div>' +
+            '<div id="foodEmpty" class="text-center py-5 d-none"><i class="bi bi-cup-hot text-muted" style="font-size:4rem"></i><p class="text-muted mt-2">Пока нет ресторанов</p></div>' +
+        '</div>';
     
-    document.getElementById('foodAddBtn').addEventListener('click', function() {
-        if (window.showFoodAddModal) window.showFoodAddModal();
-    });
-    document.getElementById('foodSearch').addEventListener('input', function() {
-        window.foodState.searchQuery = this.value;
-        renderFoodContent();
-    });
-    if (window.renderListChips) window.renderListChips();
+    document.getElementById('foodAddBtn').addEventListener('click', function() { if (window.showFoodAddModal) window.showFoodAddModal(); });
+    document.getElementById('foodSearch').addEventListener('input', function() { window.foodState.searchQuery = this.value; renderFoodContent(); });
     loadFoodPlaces();
 };
 
@@ -127,4 +120,4 @@ window.loadFoodPlaces = loadFoodPlaces;
 window.renderFoodContent = renderFoodContent;
 window.getFoodCollection = getFoodCollection;
 
-console.log('✅ foodList.js загружен');
+console.log('✅ foodList.js v2 загружен');

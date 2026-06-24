@@ -9,7 +9,7 @@ window.initTravelMap = function() {
     
     // Загружаем Яндекс.Карты
     var script = document.createElement('script');
-    script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=ВАШ_ЯНДЕКС_КЛЮЧ';
+    script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=d8e59a70-957e-4901-8a97-d25b76148bb3';
     script.onload = function() {
         ymaps.ready(function() {
             window.travelMap = new ymaps.Map('travelMapContainer', {
