@@ -24,7 +24,6 @@ async function loadProfileData(userId) {
     var body = document.getElementById('profileBody');
     var isOwner = userId === window.currentUser?.uid;
     
-    // Проверка: друг или владелец?
     if (!isOwner && !window.isFriend(userId)) {
         body.innerHTML = 
             '<div class="text-center py-4">' +
@@ -38,7 +37,6 @@ async function loadProfileData(userId) {
         return;
     }
     
-    // Создаём профиль если нет
     var profileRef = window.doc(window.db, 'profiles', userId);
     var profileSnap = await window.getDoc(profileRef);
     if (!profileSnap.exists()) {
@@ -49,17 +47,11 @@ async function loadProfileData(userId) {
             var userData = userSnap.data();
             name = userData.name || name;
         }
-        await window.setDoc(profileRef, {
-            name: name,
-            photo: photo,
-            bio: '',
-            createdAt: Date.now()
-        });
+        await window.setDoc(profileRef, { name: name, photo: photo, bio: '', createdAt: Date.now() });
     }
     
     var profile = (await window.getDoc(profileRef)).data();
     
-    // Загружаем статистику
     var placesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/places'));
     var foodSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/food'));
     var moviesSnap = await window.getDocs(window.collection(window.db, 'users/' + userId + '/movies'));
@@ -87,6 +79,7 @@ async function loadProfileData(userId) {
             '<p class="text-muted">' + userBio + '</p>' +
             '<div class="d-flex justify-content-center flex-wrap gap-1">' +
                 (isOwner ? '<button class="btn btn-sm btn-outline-primary" onclick="window.editProfile()"><i class="bi bi-pencil me-1"></i>Редактировать</button>' : '') +
+                (isOwner ? '<button class="btn btn-sm btn-outline-secondary" onclick="window.setMyNickname()"><i class="bi bi-at me-1"></i>Установить ник</button>' : '') +
                 '<button class="btn btn-sm btn-outline-success" onclick="window.showCollections()"><i class="bi bi-collection me-1"></i>Подборки</button>' +
                 '<button class="btn btn-sm btn-outline-info" onclick="window.showPublicMap(\'' + userId + '\')"><i class="bi bi-map me-1"></i>Карта</button>' +
                 (!isOwner ? '<button class="btn btn-sm btn-primary" onclick="window.switchToFriend(\'' + userId + '\', \'' + userName + '\')"><i class="bi bi-eye me-1"></i>Смотреть списки</button>' : '') +
@@ -113,39 +106,39 @@ async function loadProfileData(userId) {
 window.editProfile = function() {
     var bio = prompt('О себе:', '');
     if (bio === null) return;
-    
     window.setDoc(window.doc(window.db, 'profiles', window.currentUser.uid), {
         name: window.currentUser.displayName || 'Пользователь',
         photo: window.currentUser.photoURL || '',
         bio: bio || '',
         updatedAt: Date.now()
     });
-    
     window.showProfile(window.currentUser.uid);
 };
 
-// Переключиться на списки друга
+window.setMyNickname = function() {
+    var nick = prompt('Придумайте уникальный ник (латиница, цифры, _):', '');
+    if (!nick) return;
+    window.saveNickname(nick).then(function(success) {
+        if (success) {
+            alert('✅ Ник @' + nick.toLowerCase() + ' установлен!');
+            window.showProfile(window.currentUser.uid);
+        }
+    });
+};
+
 window.switchToFriend = function(uid, name) {
     window.currentList = 'shared_' + uid;
     window.currentFriendId = uid;
-    
-    // Закрываем профиль
     var modal = bootstrap.Modal.getInstance(document.getElementById('profileModal'));
     if (modal) modal.hide();
-    
-    // Переключаем на путешествия
     document.querySelectorAll('#sectionMenu button').forEach(function(b) { b.classList.remove('active'); });
     var travelBtn = document.querySelector('#sectionMenu button[data-section="travel"]');
     if (travelBtn) {
         travelBtn.classList.add('active');
         window.currentSection = 'travel';
         localStorage.setItem('currentSection', 'travel');
-        if (window.renderTravelSection) {
-            window.renderTravelSection(document.getElementById('sectionContainer'));
-        }
+        if (window.renderTravelSection) window.renderTravelSection(document.getElementById('sectionContainer'));
     }
-    
-    // Обновляем фишки
     if (window.renderAllFriends) window.renderAllFriends();
     if (window.renderListChips) window.renderListChips();
 };

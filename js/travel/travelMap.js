@@ -1,45 +1,70 @@
-// ==================== travelMap.js ====================
+// ==================== travelMap.js (Яндекс.Карты) ====================
+
 window.travelMap = null;
 window.travelMarkers = [];
 
 window.initTravelMap = function() {
-    const container = document.getElementById('travelMapContainer');
+    var container = document.getElementById('travelMapContainer');
     if (!container || window.travelMap) return;
     
-    window.travelMap = L.map('travelMapContainer').setView([55.76, 37.62], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(window.travelMap);
-    
-    // Обновить карту при переключении вкладки
-    document.querySelector('#travelTabs button[data-bs-target="#travelMapTab"]')?.addEventListener('shown.bs.tab', () => {
-        setTimeout(() => {
-            window.travelMap?.invalidateSize();
+    // Загружаем Яндекс.Карты
+    var script = document.createElement('script');
+    script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=ВАШ_ЯНДЕКС_КЛЮЧ';
+    script.onload = function() {
+        ymaps.ready(function() {
+            window.travelMap = new ymaps.Map('travelMapContainer', {
+                center: [55.76, 37.62],
+                zoom: 4,
+                controls: ['zoomControl', 'searchControl', 'typeSelector']
+            });
+            
             renderTravelMarkers();
-        }, 300);
-    });
+        });
+    };
+    document.head.appendChild(script);
     
-    renderTravelMarkers();
+    // Обновить при переключении вкладки
+    var tabBtn = document.querySelector('#travelTabs button[data-bs-target="#travelMapTab"]');
+    if (tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', function() {
+            setTimeout(function() {
+                if (window.travelMap) window.travelMap.container.fitToViewport();
+                renderTravelMarkers();
+            }, 300);
+        });
+    }
 };
 
 async function renderTravelMarkers() {
-    if (!window.travelMap) return;
-    window.travelMarkers.forEach(m => window.travelMap.removeLayer(m));
-    window.travelMarkers = [];
+    if (!window.travelMap || !window.ymaps) return;
     
-    const places = window.travelState.places || [];
-    for (const place of places) {
+    // Очищаем старые
+    window.travelMap.geoObjects.removeAll();
+    
+    var places = window.travelState.places || [];
+    
+    for (var i = 0; i < places.length; i++) {
+        var place = places[i];
         if (place.location) {
             try {
-                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place.location)}&limit=1`);
-                const data = await resp.json();
-                if (data.length > 0) {
-                    const marker = L.marker([parseFloat(data[0].lat), parseFloat(data[0].lon)])
-                        .addTo(window.travelMap)
-                        .bindPopup(`<strong>${place.name}</strong><br>${place.description || ''}`);
-                    window.travelMarkers.push(marker);
-                }
+                var result = await ymaps.geocode(place.location);
+                var coords = result.geoObjects.get(0).geometry.getCoordinates();
+                
+                var placemark = new ymaps.Placemark(coords, {
+                    balloonContent: '<strong>' + place.name + '</strong><br>' + (place.description || ''),
+                    hintContent: place.name
+                }, {
+                    preset: 'islands#blueDotIcon'
+                });
+                
+                window.travelMap.geoObjects.add(placemark);
             } catch (e) {}
         }
     }
+    
+    if (window.travelMap.geoObjects.getLength() > 0) {
+        window.travelMap.setBounds(window.travelMap.geoObjects.getBounds(), { checkZoomRange: true });
+    }
 }
 
-console.log('✅ travelMap.js загружен');
+console.log('✅ travelMap.js загружен (Яндекс.Карты)');

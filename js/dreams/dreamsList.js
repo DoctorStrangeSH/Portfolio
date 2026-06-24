@@ -146,7 +146,7 @@ function renderDreamsFilters() {
     h += '</div>';
     
     h += '<div class="btn-group btn-group-sm">' +
-        '<button class="btn btn-outline-secondary ' + (window.dreamsState.viewMode === 'kanban' ? 'active' : '') + '" data-view="kanban"><i class="bi bi-columns-gap"></i> Канбан</button>' +
+        '<button class="btn btn-outline-secondary ' + (window.dreamsState.viewMode === 'kanban' ? 'active' : '') + '" data-view="kanban"><i class="bi bi-columns-gap"></i> Плитки</button>' +
         '<button class="btn btn-outline-secondary ' + (window.dreamsState.viewMode === 'grid' ? 'active' : '') + '" data-view="grid"><i class="bi bi-grid-3x3-gap"></i> Сетка</button>' +
     '</div>';
     

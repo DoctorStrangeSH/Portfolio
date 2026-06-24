@@ -127,7 +127,7 @@ window.renderMoviesSection = function(container) {
         '<div class="d-flex gap-2 flex-wrap align-items-center mb-3 overflow-auto pb-1" id="moviesListChips"></div>' +
         '<div class="row g-2 mb-3">' +
             '<div class="col-md-6"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search"></i></span><input type="text" class="form-control" id="moviesSearch" placeholder="Поиск по названию..."></div></div>' +
-            '<div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="moviesAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить из TMDB</button></div>' +
+            '<div class="col-md-6 text-end"><button class="btn btn-success btn-sm" id="moviesAddBtn"><i class="bi bi-plus-lg me-1"></i>Добавить кино</button></div>' +
         '</div>' +
         '<div id="tmdbSearch" class="d-none mb-3"><div class="card border-0 shadow-sm"><div class="card-body">' +
             '<div class="d-flex justify-content-between align-items-center mb-3">' +
