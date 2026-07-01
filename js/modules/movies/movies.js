@@ -4,7 +4,7 @@ import { APP_CONFIG } from '../../config/constants.js';
 export class MoviesModule {
     constructor() {
         this.movieService = new MovieService();
-        this.currentTab = 'my'; // 'my' | 'search' | 'popular'
+        this.currentTab = 'my';
         this.currentFilter = { status: 'all', genre: 'all' };
         this.searchQuery = '';
         this.searchPage = 1;
@@ -23,7 +23,6 @@ export class MoviesModule {
         mainContent.innerHTML = this.getTemplate();
         this.attachEventListeners();
         
-        // Загружаем фильмы пользователя
         await this.loadMyMovies();
     }
 
@@ -39,7 +38,6 @@ export class MoviesModule {
                     </div>
                 </div>
 
-                <!-- Табы -->
                 <ul class="nav nav-tabs movies-tabs mb-4">
                     <li class="nav-item">
                         <button class="nav-link active" data-tab="my">
@@ -58,7 +56,6 @@ export class MoviesModule {
                     </li>
                 </ul>
 
-                <!-- Поиск (скрыт по умолчанию) -->
                 <div id="searchSection" class="mb-4" style="display: none;">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -68,7 +65,6 @@ export class MoviesModule {
                     </div>
                 </div>
 
-                <!-- Фильтры для моих фильмов -->
                 <div id="filtersSection" class="mb-4">
                     <div class="row g-2">
                         <div class="col-12 col-md-6">
@@ -93,15 +89,12 @@ export class MoviesModule {
                     </div>
                 </div>
 
-                <!-- Контент -->
                 <div id="moviesContent">
                     <div id="moviesGrid" class="row g-4"></div>
                 </div>
 
-                <!-- Пагинация -->
                 <div id="pagination" class="d-flex justify-content-center mt-4" style="display: none;"></div>
 
-                <!-- Детали фильма (модалка) -->
                 <div id="movieModalContainer"></div>
             </div>
         `;
@@ -109,7 +102,10 @@ export class MoviesModule {
 
     async loadMyMovies() {
         const grid = document.getElementById('moviesGrid');
+        const pagination = document.getElementById('pagination');
         if (!grid) return;
+
+        if (pagination) pagination.style.display = 'none';
 
         grid.innerHTML = window.app.ui.createLoader();
 
@@ -136,12 +132,11 @@ export class MoviesModule {
             grid.innerHTML = movies.map((movie, index) => this.createMovieCard(movie, index)).join('');
             this.attachCardListeners();
         }
-        
-        document.getElementById('pagination').style.display = 'none';
     }
 
     async loadPopularMovies() {
         const grid = document.getElementById('moviesGrid');
+        const pagination = document.getElementById('pagination');
         if (!grid) return;
 
         grid.innerHTML = window.app.ui.createLoader();
@@ -149,11 +144,12 @@ export class MoviesModule {
         const result = await this.movieService.getPopularMovies(this.popularPage);
 
         if (result.movies.length === 0) {
+            if (pagination) pagination.style.display = 'none';
             grid.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-cloud-slash display-1 text-muted"></i>
                     <h4 class="mt-3">Не удалось загрузить фильмы</h4>
-                    <p class="text-muted">Проверь API ключ или интернет-соединение</p>
+                    <p class="text-muted">Попробуй позже</p>
                 </div>
             `;
         } else {
@@ -165,6 +161,7 @@ export class MoviesModule {
 
     async searchMovies() {
         const grid = document.getElementById('moviesGrid');
+        const pagination = document.getElementById('pagination');
         if (!grid) return;
 
         if (!this.searchQuery.trim()) return;
@@ -174,6 +171,7 @@ export class MoviesModule {
         const result = await this.movieService.searchMovies(this.searchQuery, this.searchPage);
 
         if (result.movies.length === 0) {
+            if (pagination) pagination.style.display = 'none';
             grid.innerHTML = `
                 <div class="col-12 text-center py-5">
                     <i class="bi bi-emoji-frown display-1 text-muted"></i>
@@ -326,7 +324,6 @@ export class MoviesModule {
     }
 
     attachEventListeners() {
-        // Переключение табов
         document.querySelectorAll('.movies-tabs [data-tab]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 document.querySelectorAll('.movies-tabs [data-tab]').forEach(t => t.classList.remove('active'));
@@ -335,7 +332,6 @@ export class MoviesModule {
             });
         });
 
-        // Фильтры статуса
         document.querySelectorAll('#statusFilters [data-filter]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('#statusFilters [data-filter]').forEach(b => b.classList.remove('active'));
@@ -345,7 +341,6 @@ export class MoviesModule {
             });
         });
 
-        // Фильтр жанра
         const genreFilter = document.getElementById('genreFilter');
         if (genreFilter) {
             genreFilter.addEventListener('change', (e) => {
@@ -354,7 +349,6 @@ export class MoviesModule {
             });
         }
 
-        // Поиск
         const searchBtn = document.getElementById('searchBtn');
         const searchInput = document.getElementById('searchInput');
         
@@ -382,10 +376,11 @@ export class MoviesModule {
         const filtersSection = document.getElementById('filtersSection');
         const pagination = document.getElementById('pagination');
         
+        if (pagination) pagination.style.display = 'none';
+        
         if (tab === 'search') {
             if (searchSection) searchSection.style.display = 'block';
             if (filtersSection) filtersSection.style.display = 'none';
-            if (pagination) pagination.style.display = 'none';
             document.getElementById('moviesGrid').innerHTML = '';
         } else if (tab === 'popular') {
             if (searchSection) searchSection.style.display = 'none';
@@ -399,7 +394,6 @@ export class MoviesModule {
     }
 
     attachCardListeners() {
-        // Кнопка "Добавить" на карточках из поиска/популярного
         document.querySelectorAll('.add-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -408,7 +402,6 @@ export class MoviesModule {
             });
         });
 
-        // Кнопка "Детали"
         document.querySelectorAll('.details-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -417,7 +410,6 @@ export class MoviesModule {
             });
         });
 
-        // Кнопка редактирования
         document.querySelectorAll('.edit-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -426,7 +418,6 @@ export class MoviesModule {
             });
         });
 
-        // Кнопка удаления
         document.querySelectorAll('.delete-movie-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -463,7 +454,6 @@ export class MoviesModule {
     }
 
     showMovieFormModal(movieData, existingId) {
-        // Удаляем старую модалку
         document.getElementById('movieModal')?.remove();
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');
@@ -566,7 +556,6 @@ export class MoviesModule {
             document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         });
 
-        // Звёздный рейтинг
         const starRating = document.getElementById('starRating');
         const ratingInput = document.querySelector('input[name="userRating"]');
         const clearBtn = document.getElementById('clearRating');
@@ -605,7 +594,6 @@ export class MoviesModule {
             });
         }
 
-        // Сохранение
         document.getElementById('saveMovieBtn').addEventListener('click', async () => {
             const form = document.getElementById('movieForm');
             const formData = new FormData(form);
@@ -654,7 +642,6 @@ export class MoviesModule {
         const details = await this.movieService.getMovieDetails(movieId);
         if (!details) return;
 
-        // Удаляем старую
         document.getElementById('movieModal')?.remove();
         document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
         document.body.classList.remove('modal-open');

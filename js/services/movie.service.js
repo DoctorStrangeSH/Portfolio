@@ -1,6 +1,6 @@
 import { db } from '../config/firebase.js';
 import { APP_CONFIG } from '../config/constants.js';
-import {
+import { 
     collection,
     doc,
     addDoc,
@@ -21,11 +21,10 @@ export class MovieService {
         this.cache = new Map();
     }
 
-    // Поиск фильмов
     async searchMovies(query, page = 1) {
         try {
             const cacheKey = `search_${query}_${page}`;
-
+            
             if (this.cache.has(cacheKey)) {
                 const cached = this.cache.get(cacheKey);
                 if (Date.now() - cached.timestamp < 300000) {
@@ -35,7 +34,7 @@ export class MovieService {
 
             const endpoint = `/proxy/search/movie?query=${encodeURIComponent(query)}&language=ru-RU&page=${page}`;
             const data = await this.fetchFromWorker(endpoint);
-
+            
             if (!data || data.error) {
                 throw new Error(data?.error || 'No data');
             }
@@ -74,11 +73,10 @@ export class MovieService {
         }
     }
 
-    // Популярные фильмы
     async getPopularMovies(page = 1) {
         try {
             const cacheKey = `popular_${page}`;
-
+            
             if (this.cache.has(cacheKey)) {
                 const cached = this.cache.get(cacheKey);
                 if (Date.now() - cached.timestamp < 300000) {
@@ -88,7 +86,7 @@ export class MovieService {
 
             const endpoint = `/proxy/movie/popular?language=ru-RU&page=${page}`;
             const data = await this.fetchFromWorker(endpoint);
-
+            
             if (!data || data.error) {
                 throw new Error(data?.error || 'No data');
             }
@@ -125,12 +123,11 @@ export class MovieService {
         }
     }
 
-    // Детали фильма
     async getMovieDetails(movieId) {
         try {
             const endpoint = `/proxy/movie/${movieId}?language=ru-RU`;
             const data = await this.fetchFromWorker(endpoint);
-
+            
             if (!data || data.error) {
                 throw new Error(data?.error || 'No data');
             }
@@ -160,17 +157,11 @@ export class MovieService {
         }
     }
 
-    // Запрос к твоему Worker
     async fetchFromWorker(endpoint) {
         const url = `${this.workerUrl}${endpoint}`;
-
-        console.log('Запрос к Worker:', url);
-
+        
         const controller = new AbortController();
-        const timeout = setTimeout(() => {
-            console.warn('Таймаут запроса:', url);
-            controller.abort();
-        }, 15000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
 
         try {
             const response = await fetch(url, {
@@ -182,44 +173,34 @@ export class MovieService {
 
             clearTimeout(timeout);
 
-            console.log('Ответ Worker:', response.status);
-
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Ошибка Worker:', errorText);
                 throw new Error(`HTTP ${response.status}`);
             }
 
-            const data = await response.json();
-            console.log('Данные получены, результатов:', data.results?.length || 0);
-
-            return data;
+            return await response.json();
         } catch (error) {
             clearTimeout(timeout);
-
+            
             if (error.name === 'AbortError') {
-                console.error('Запрос прерван по таймауту');
                 throw new Error('Сервер не отвечает');
             }
-
-            console.error('Ошибка запроса:', error.message);
+            
             throw error;
         }
     }
 
-    // Фильмы пользователя
     async getUserMovies(userId, filters = {}) {
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
             let q = query(moviesRef, orderBy('createdAt', 'desc'));
-
+            
             if (filters.status && filters.status !== 'all') {
                 q = query(q, where('status', '==', filters.status));
             }
-
+            
             const snapshot = await getDocs(q);
             const movies = [];
-
+            
             snapshot.forEach(doc => {
                 if (doc.id !== '_init') {
                     const data = doc.data();
@@ -230,11 +211,11 @@ export class MovieService {
                     });
                 }
             });
-
+            
             if (filters.genre && filters.genre !== 'all') {
                 return movies.filter(m => m.genreIds?.includes(parseInt(filters.genre)));
             }
-
+            
             return movies;
         } catch (error) {
             console.error('Ошибка загрузки фильмов пользователя:', error);
@@ -242,11 +223,10 @@ export class MovieService {
         }
     }
 
-    // Добавить фильм
     async addMovie(userId, movieData) {
         try {
             const moviesRef = collection(this.db, 'users', userId, 'movies');
-
+            
             const newMovie = {
                 ...movieData,
                 createdAt: serverTimestamp(),
@@ -256,10 +236,10 @@ export class MovieService {
                 review: movieData.review || '',
                 notes: movieData.notes || ''
             };
-
+            
             const docRef = await addDoc(moviesRef, newMovie);
             await this.updateUserStats(userId);
-
+            
             return { success: true, id: docRef.id };
         } catch (error) {
             console.error('Ошибка добавления фильма:', error);
@@ -267,7 +247,6 @@ export class MovieService {
         }
     }
 
-    // Обновить фильм
     async updateMovie(userId, movieId, updates) {
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
@@ -275,7 +254,7 @@ export class MovieService {
                 ...updates,
                 updatedAt: serverTimestamp()
             });
-
+            
             return { success: true };
         } catch (error) {
             console.error('Ошибка обновления фильма:', error);
@@ -283,13 +262,12 @@ export class MovieService {
         }
     }
 
-    // Удалить фильм
     async deleteMovie(userId, movieId) {
         try {
             const movieRef = doc(this.db, 'users', userId, 'movies', movieId);
             await deleteDoc(movieRef);
             await this.updateUserStats(userId);
-
+            
             return { success: true };
         } catch (error) {
             console.error('Ошибка удаления фильма:', error);
@@ -297,13 +275,12 @@ export class MovieService {
         }
     }
 
-    // Статистика
     async updateUserStats(userId) {
         try {
             const movies = await this.getUserMovies(userId);
             const watched = movies.filter(m => m.status === 'watched').length;
             const toWatch = movies.filter(m => m.status === 'to_watch').length;
-
+            
             const userRef = doc(this.db, 'users', userId);
             await updateDoc(userRef, {
                 'stats.movies': movies.length,
